@@ -1,0 +1,16 @@
+name: 'Gradle Build'
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: 'Build'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+      # Use --no-daemon to prevent cache issues, see https://github.com/actions/setup-java/pull/218
+      - run: ./gradlew build --no-daemon
