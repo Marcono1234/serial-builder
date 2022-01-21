@@ -15,14 +15,15 @@ should normally not have any effect, an inline comment is written in the generat
 data is malformed, or if it cannot be recreated at all, an exception is thrown. That should normally only happen when
 the data is valid according to the serialization format grammar, but cannot actually be read by `ObjectInputStream`, or
 when it is not 'interesting', such as a top level `String` object, and is therefore not supported by the serial-builder
-API. If you are missing support for a use case, feel free to create a GitHub issue. Note that for binary data written by
-`Externalizable.writeExternal` and the special `writeObject` method the generated code writes it as one byte array
-because the serialization data includes no information about the data types. If you want to modify this data in the
-generated code, it is recommended to have a look at the source code of the corresponding serialized class (if available)
-to determine how its `writeExternal` respectively `writeObject` method is implemented.
+API. If you are missing support for a use case, feel free to create a GitHub issue.
 
-Note that this project is not recommended for visualizing the serialization data structure due to the limitations
-mentioned above. Instead, other tools such as [NickstaDB's SerializationDumper](https://github.com/NickstaDB/SerializationDumper)
+For binary data written by `Externalizable.writeExternal` and the special `writeObject` method the generated code
+writes the data as one byte array because the serialization data includes no information about the data types. If you
+want to modify this data in the generated code, it is recommended to have a look at the source code of the corresponding
+serialized class (if available) to determine how its `writeExternal` respectively `writeObject` method is implemented.
+
+It is not recommended using this project only for visualizing the structure of serialization data, due to the
+limitations mentioned above. Instead, other tools such as [NickstaDB's SerializationDumper](https://github.com/NickstaDB/SerializationDumper)
 should be used for that.
 
 ## Usage
