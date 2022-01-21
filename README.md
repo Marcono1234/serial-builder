@@ -12,8 +12,8 @@ Compared to using Java's `ObjectOutputStream` this library has the following adv
 - It is possible to write arbitrary field values without having to access the internals of the target class with reflection.
 - It is possible to omit data or add additional serialization data which would normally not be written.
 
-The entrypoints of this library are the classes [`SerialBuilder`](src/main/java/marcono1234/serialization/serialbuilder/SerialBuilder.java)
-and [`SimpleSerialBuilder`](src/main/java/marcono1234/serialization/serialbuilder/SimpleSerialBuilder.java).
+The entrypoints of this library are the classes [`SerialBuilder`](serial-builder/src/main/java/marcono1234/serialization/serialbuilder/SerialBuilder.java)
+and [`SimpleSerialBuilder`](serial-builder/src/main/java/marcono1234/serialization/serialbuilder/SimpleSerialBuilder.java).
 The API structure of `SerialBuilder` is pretty close to the actual serialization data format. This allows low level
 creation of serialization data, at the cost of verbose usage and reduced error checking. `SimpleSerialBuilder` operates
 on a higher level, which makes its usage more concise and less error-prone. In most cases the API  offered by
@@ -25,7 +25,36 @@ data in the form of `byte[]` is returned. Using the API in any other way is not 
 It is recommended to follow the IDE code completion suggestions while using the API, looking at the builder API
 interfaces is most likely not that helpful.
 
-## Usage examples (`SimpleSerialBuilder`)
+## Usage
+Requires Java 17 or newer
+
+Currently this library is not published to Maven Central. You can either [build the project locally](#building)
+or you can [use JitPack as Maven repository](https://jitpack.io/#Marcono1234/serial-builder) serving this library.
+
+When using JitPack it is recommended to put the jitpack.io repository last in the list of declared repositories for
+better performance and to avoid pulling undesired dependencies from it. When using Gradle as build tool you should also
+use [repository content filtering](https://docs.gradle.org/current/userguide/declaring_repositories.html#sec:repository-content-filtering):
+```kotlin
+repositories {
+    mavenCentral()
+    exclusiveContent {
+        forRepository {
+            maven {
+                url = uri("https://jitpack.io")
+            }
+        }
+        filter {
+            // Only use JitPack for the `serial-builder` library
+            includeModule("com.github.Marcono1234.serial-builder", "serial-builder")
+        }
+    }
+}
+```
+
+## API usage examples (`SimpleSerialBuilder`)
+
+Note: This project also supports generating Java code using this API to recreate existing serialization data, see the
+[code generation section below](#code-generation).
 
 ### Class hierarchy
 Let's assume you have these two classes:
@@ -144,7 +173,7 @@ byte[] serialData = SimpleSerialBuilder.startProxyObject(Callable.class)
 
 ### Handles
 The serialization protocol supports _handles_ which refer to a previously written instance. This API supports this
-feature through the [`Handle`](src/main/java/marcono1234/serialization/serialbuilder/builder/api/Handle.java) class.
+feature through the [`Handle`](serial-builder/src/main/java/marcono1234/serialization/serialbuilder/builder/api/Handle.java) class.
 First you create a new (unassigned) `Handle`, then you pass it to one of the builder methods with `Handle` parameter
 and afterwards you can use it to refer to the previously written object.
 
@@ -177,9 +206,31 @@ byte[] serialData = SimpleSerialBuilder.startSerializableObject(selfHandle)
 .endObject();
 ```
 
+## Code generation
+Especially when using this API for existing large serialization data, it can be cumbersome to manually write all the
+Java code to recreate the serialization data. Therefore, this project provides code generation functionality which,
+for given serialization data, generates the corresponding API calls to recreate the serialization data (as close as
+possible). See the [README of the subproject](./serial-builder-codegen/README.md) for more information.
+
+## Project structure
+This project is a multi-project Gradle build. It has the following subprojects:
+- [`serial-builder`](./serial-builder): Contains the source code of the builder API
+- [`serial-builder-codegen`](./serial-builder-codegen): Contains the source code for [code generation](#code-generation)
+
+## Building
+This project uses Gradle for building; just run:
+```
+./gradlew build
+```
+
+It is built against Java 17, but there is no need to manually install the correct JDK; Gradle's [toolchain](https://docs.gradle.org/current/userguide/toolchains.html)
+feature automatically downloads the needed JDK. Some IDEs do not support toolchains yet, so you might have to
+configure them manually.
+
 ## Similar / related projects
 - [NickstaDB's SerializationDumper](https://github.com/NickstaDB/SerializationDumper)
 - [frohoff's ysoserial](https://github.com/frohoff/ysoserial)
+- [Moritz Bechler's ruby-serialize](https://github.com/mb-syss/ruby-serialize)
 
 ## License
 This project [uses the MIT license](./LICENSE.txt); all contributions are implicitly under that license.

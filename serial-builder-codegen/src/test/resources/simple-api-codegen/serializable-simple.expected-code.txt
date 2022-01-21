@@ -1,0 +1,5 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.SerialBuilderTest$SimpleSerializableClass", 1L)
+        .primitiveField("i", 1)
+    .endClassData()
+.endObject();

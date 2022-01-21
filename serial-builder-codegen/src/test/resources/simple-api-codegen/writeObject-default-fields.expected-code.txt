@@ -1,0 +1,26 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$ClassWithWriteObjectWritingFields", 1L)
+        .primitiveField("i", 1)
+        .beginObjectField("s", "java.lang.String")
+            .string("test")
+        .endField()
+        .writeObjectWith(writer -> {
+            writer.write(new byte[] {0, 0, 0, 2});
+            writer.string("manually-written");
+            writer.beginObjectArray("java.io.Serializable[]")
+                .beginSerializableObject()
+                    .beginClassData("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$SerializableClass", 1L)
+                        .primitiveField("i", 6)
+                        .beginObjectField("array", "int[]")
+                            .array(new int[] {1, 2, 3})
+                        .endField()
+                        .beginObjectField("s", "java.lang.String")
+                            .string("nested-test")
+                        .endField()
+                    .endClassData()
+                .endObject()
+            .endArray();
+            writer.write(new byte[] {0, 0, 0, 10});
+        })
+    .endClassData()
+.endObject();

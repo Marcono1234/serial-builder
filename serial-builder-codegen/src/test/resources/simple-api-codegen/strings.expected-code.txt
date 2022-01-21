@@ -1,0 +1,13 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$ClassWithNestingWriteObject", 1L)
+        .writeObjectWith(writer -> {
+            writer.beginSerializableObject()
+                .beginClassData("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$ClassWithString", 1L)
+                    .beginObjectField("s", "java.lang.String")
+                        .string("test \\ \b \t \n \f \r ' \" \u0000 \u0100 \ud800\udc00 \udc00")
+                    .endField()
+                .endClassData()
+            .endObject();
+        })
+    .endClassData()
+.endObject();

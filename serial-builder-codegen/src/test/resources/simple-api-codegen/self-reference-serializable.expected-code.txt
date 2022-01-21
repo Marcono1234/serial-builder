@@ -1,0 +1,9 @@
+Handle handle1 = new Handle();
+
+byte[] serialData = SimpleSerialBuilder.startSerializableObject(handle1)
+    .beginClassData("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$SerializableWithSelfReference", 1L)
+        .beginObjectField("self", "marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$SerializableWithSelfReference")
+            .objectHandle(handle1)
+        .endField()
+    .endClassData()
+.endObject();

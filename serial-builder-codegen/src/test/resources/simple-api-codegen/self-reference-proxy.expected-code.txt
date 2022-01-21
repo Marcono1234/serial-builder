@@ -1,0 +1,5 @@
+Handle handle1 = new Handle();
+
+byte[] serialData = SimpleSerialBuilder.startProxyObject(handle1, "java.lang.reflect.InvocationHandler")
+    .invocationHandlerHandle(handle1)
+.endProxyObject();

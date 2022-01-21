@@ -1,0 +1,5 @@
+byte[] serialData = SimpleSerialBuilder.startProxyObject("java.util.concurrent.Callable")
+    .externalizableInvocationHandler("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$ExternalizableInvocationHandler", 1L, writer -> {
+        writer.string("custom-result");
+    })
+.endProxyObject();

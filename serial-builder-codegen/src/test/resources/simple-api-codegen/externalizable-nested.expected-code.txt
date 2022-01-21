@@ -1,0 +1,5 @@
+byte[] serialData = SimpleSerialBuilder.externalizableObject("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$NestingExternalizableClass", 1L, writer -> {
+    writer.externalizableObject("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$NestingExternalizableClass", 1L, writer2 -> {
+        writer2.nullObject();
+    });
+});

@@ -1,0 +1,15 @@
+byte[] serialData = SimpleSerialBuilder.externalizableObject("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$ExternalizableClass", -7793606793944882543L, writer -> {
+    writer.string("test");
+    writer.write(new byte[] {0, 0, 0, 5});
+    writer.beginSerializableObject()
+        .beginClassData("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$SerializableClass", 1L)
+            .primitiveField("i", 6)
+            .beginObjectField("array", "int[]")
+                .array(new int[] {1, 2, 3})
+            .endField()
+            .beginObjectField("s", "java.lang.String")
+                .string("nested-test")
+            .endField()
+        .endClassData()
+    .endObject();
+});

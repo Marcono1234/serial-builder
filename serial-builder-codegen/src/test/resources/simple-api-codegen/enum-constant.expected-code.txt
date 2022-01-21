@@ -1,0 +1,7 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$ClassWithEnum", 1L)
+        .beginObjectField("e", "marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$TestEnum")
+            .enumConstant("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$TestEnum", "TEST")
+        .endField()
+    .endClassData()
+.endObject();

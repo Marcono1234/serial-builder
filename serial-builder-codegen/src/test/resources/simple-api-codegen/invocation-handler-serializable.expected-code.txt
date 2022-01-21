@@ -1,0 +1,9 @@
+byte[] serialData = SimpleSerialBuilder.startProxyObject("java.util.concurrent.Callable")
+    .beginSerializableInvocationHandler()
+        .beginClassData("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$SerializableInvocationHandler", 1L)
+            .beginObjectField("result", "java.lang.String")
+                .string("custom-result")
+            .endField()
+        .endClassData()
+    .endObject()
+.endProxyObject();

@@ -1,0 +1,5 @@
+Handle handle1 = new Handle();
+
+byte[] serialData = SimpleSerialBuilder.externalizableObject(handle1, "marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$ExternalizableWithSelfReference", 1L, writer -> {
+    writer.objectHandle(handle1);
+});
