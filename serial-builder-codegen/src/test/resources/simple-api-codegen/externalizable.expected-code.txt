@@ -3,7 +3,7 @@ byte[] serialData = SimpleSerialBuilder.externalizableObject("marcono1234.serial
     writer.write(new byte[] {0, 0, 0, 5});
     writer.beginSerializableObject()
         .beginClassData("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$SerializableClass", 1L)
-            .primitiveField("i", 6)
+            .primitiveIntField("i", 6)
             .beginObjectField("array", "int[]")
                 .array(new int[] {1, 2, 3})
             .endField()

@@ -127,7 +127,7 @@ To create serialization data for it, you can use the API in the following way:
 byte[] serialData = SimpleSerialBuilder.startSerializableObject()
     .beginClassData(ClassWithWriteObject.class)
         // Represents the data written by the `defaultWriteObject()` call
-        .primitiveField("i", 1)
+        .primitiveIntField("i", 1)
         .beginObjectField("s", String.class)
             .string("test")
         .endField()

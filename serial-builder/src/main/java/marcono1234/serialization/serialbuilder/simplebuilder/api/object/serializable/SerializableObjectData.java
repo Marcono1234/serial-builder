@@ -12,8 +12,6 @@ import java.util.function.Function;
 public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> {
     // API Note: API does not group fields into primitive and object fields; implementation will take care of this
 
-    // TODO: Choose different names for primitive field methods to avoid accidentally calling wrong overload (e.g. for byte or short)?
-
     /**
      * Writes a {@code boolean} field.
      *
@@ -23,7 +21,7 @@ public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> 
      *      value of the field
      * @return <i>this</i>
      */
-    SerializableObjectData<C> primitiveField(String fieldName, boolean value);
+    SerializableObjectData<C> primitiveBooleanField(String fieldName, boolean value);
 
     /**
      * Writes a {@code byte} field.
@@ -34,7 +32,7 @@ public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> 
      *      value of the field
      * @return <i>this</i>
      */
-    SerializableObjectData<C> primitiveField(String fieldName, byte value);
+    SerializableObjectData<C> primitiveByteField(String fieldName, byte value);
 
     /**
      * Writes a {@code char} field.
@@ -45,7 +43,7 @@ public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> 
      *      value of the field
      * @return <i>this</i>
      */
-    SerializableObjectData<C> primitiveField(String fieldName, char value);
+    SerializableObjectData<C> primitiveCharField(String fieldName, char value);
 
     /**
      * Writes a {@code short} field.
@@ -56,7 +54,7 @@ public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> 
      *      value of the field
      * @return <i>this</i>
      */
-    SerializableObjectData<C> primitiveField(String fieldName, short value);
+    SerializableObjectData<C> primitiveShortField(String fieldName, short value);
 
     /**
      * Writes an {@code int} field.
@@ -67,7 +65,7 @@ public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> 
      *      value of the field
      * @return <i>this</i>
      */
-    SerializableObjectData<C> primitiveField(String fieldName, int value);
+    SerializableObjectData<C> primitiveIntField(String fieldName, int value);
 
     /**
      * Writes a {@code long} field.
@@ -78,7 +76,7 @@ public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> 
      *      value of the field
      * @return <i>this</i>
      */
-    SerializableObjectData<C> primitiveField(String fieldName, long value);
+    SerializableObjectData<C> primitiveLongField(String fieldName, long value);
 
     /**
      * Writes a {@code float} field.
@@ -89,7 +87,7 @@ public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> 
      *      value of the field
      * @return <i>this</i>
      */
-    SerializableObjectData<C> primitiveField(String fieldName, float value);
+    SerializableObjectData<C> primitiveFloatField(String fieldName, float value);
 
     /**
      * Writes a {@code double} field.
@@ -100,7 +98,7 @@ public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> 
      *      value of the field
      * @return <i>this</i>
      */
-    SerializableObjectData<C> primitiveField(String fieldName, double value);
+    SerializableObjectData<C> primitiveDoubleField(String fieldName, double value);
 
     /**
      * Begins an object field.

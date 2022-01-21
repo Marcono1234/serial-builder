@@ -1,6 +1,6 @@
 byte[] serialData = SimpleSerialBuilder.startSerializableObject()
     .beginClassData("marcono1234.serialization.serialbuilder.SimpleSerialBuilderTest$ClassWithWriteObjectManuallyWritingFields", 1L)
-        .primitiveField("custom-i", 2)
+        .primitiveIntField("custom-i", 2)
         .beginObjectField("custom-s", "java.lang.String")
             .string("test")
         .endField()

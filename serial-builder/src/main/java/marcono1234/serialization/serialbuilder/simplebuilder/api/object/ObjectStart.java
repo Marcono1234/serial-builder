@@ -41,7 +41,8 @@ public interface ObjectStart<C> {
      */
     C string(String s);
 
-    // TODO: Don't use varargs for array methods to avoid accidentally calling wrong overload (e.g. for byte or short)?
+    // Note: Don't use varargs for primitive arrays to avoid calling wrong overload,
+    // E.g. `array(Byte.MAX_VALUE, 1)` calling `array(int...)`
 
     /**
      * Writes an array and assigns a handle to it.
@@ -52,7 +53,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    C array(Handle unassignedHandle, boolean... array);
+    C array(Handle unassignedHandle, boolean[] array);
     /**
      * Writes an array.
      *
@@ -60,7 +61,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    default C array(boolean... array) {
+    default C array(boolean[] array) {
         return array(new Handle(), array);
     }
 
@@ -73,7 +74,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    C array(Handle unassignedHandle, byte... array);
+    C array(Handle unassignedHandle, byte[] array);
     /**
      * Writes a {@code byte} array.
      *
@@ -81,7 +82,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    default C array(byte... array) {
+    default C array(byte[] array) {
         return array(new Handle(), array);
     }
 
@@ -94,7 +95,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    C array(Handle unassignedHandle, char... array);
+    C array(Handle unassignedHandle, char[] array);
     /**
      * Writes a {@code char} array.
      *
@@ -102,7 +103,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    default C array(char... array) {
+    default C array(char[] array) {
         return array(new Handle(), array);
     }
 
@@ -115,7 +116,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    C array(Handle unassignedHandle, short... array);
+    C array(Handle unassignedHandle, short[] array);
     /**
      * Writes a {@code short} array.
      *
@@ -123,7 +124,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    default C array(short... array) {
+    default C array(short[] array) {
         return array(new Handle(), array);
     }
 
@@ -136,7 +137,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    C array(Handle unassignedHandle, int... array);
+    C array(Handle unassignedHandle, int[] array);
     /**
      * Writes an {@code int} array.
      *
@@ -144,7 +145,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    default C array(int... array) {
+    default C array(int[] array) {
         return array(new Handle(), array);
     }
 
@@ -157,7 +158,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    C array(Handle unassignedHandle, long... array);
+    C array(Handle unassignedHandle, long[] array);
     /**
      * Writes a {@code long} array.
      *
@@ -165,7 +166,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    default C array(long... array) {
+    default C array(long[] array) {
         return array(new Handle(), array);
     }
 
@@ -178,7 +179,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    C array(Handle unassignedHandle, float... array);
+    C array(Handle unassignedHandle, float[] array);
     /**
      * Writes a {@code float} array.
      *
@@ -186,7 +187,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    default C array(float... array) {
+    default C array(float[] array) {
         return array(new Handle(), array);
     }
 
@@ -199,7 +200,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    C array(Handle unassignedHandle, double... array);
+    C array(Handle unassignedHandle, double[] array);
     /**
      * Writes a {@code double} array.
      *
@@ -207,7 +208,7 @@ public interface ObjectStart<C> {
      *      array to write
      * @return <i>next step</i>
      */
-    default C array(double... array) {
+    default C array(double[] array) {
         return array(new Handle(), array);
     }
 

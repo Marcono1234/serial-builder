@@ -58,13 +58,24 @@ public record SerializableObject(List<SerializableClassData> classDataList, Hand
 
             for (SerializableClassData.PrimitiveFieldValue primitiveFieldValue : classData.primitiveFieldValues()) {
                 Object fieldValue = primitiveFieldValue.primitiveValue();
-                Class<?> fieldValueType = fieldValue.getClass();
                 String valueString = LiteralsHelper.primitiveToString(fieldValue);
 
-                StringBuilder lineBuilder = new StringBuilder(".primitiveField(");
+                StringBuilder lineBuilder = new StringBuilder(".primitive");
+                Class<?> fieldValueType = fieldValue.getClass();
+                String methodTypeName;
+                if (fieldValueType == Character.class) {
+                    methodTypeName = "Char";
+                } else if (fieldValueType == Integer.class) {
+                    methodTypeName = "Int";
+                } else {
+                    // Boxed type name matches primitive type name
+                    methodTypeName = fieldValueType.getSimpleName();
+                }
+                lineBuilder.append(methodTypeName).append("Field(");
+
                 lineBuilder.append(LiteralsHelper.createStringLiteral(primitiveFieldValue.fieldName()));
                 lineBuilder.append(", ");
-                // Add cast where otherwise wrong overload would be used
+                // Add cast for types where compiler does not accept int literal
                 if (fieldValueType == Byte.class) {
                     lineBuilder.append("(byte) ");
                 } else if (fieldValueType == Short.class) {

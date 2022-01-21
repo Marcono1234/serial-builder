@@ -43,9 +43,9 @@ import java.io.ObjectOutput;
  * <pre>{@code
  * byte[] serialData = SimpleSerialBuilder.startSerializableObject()
  *     .beginClassData(SerializableClass.class)
- *         .primitiveField("i", 6)
+ *         .primitiveIntField("i", 6)
  *         .beginObjectField("array", int[].class)
- *             .array(1, 2, 3)
+ *             .array(new int[] {1, 2, 3})
  *         .endField()
  *         .beginObjectField("s", String.class)
  *             .string("nested-test")

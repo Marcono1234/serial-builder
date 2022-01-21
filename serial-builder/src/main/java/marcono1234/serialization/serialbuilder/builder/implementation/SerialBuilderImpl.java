@@ -188,7 +188,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     }
 
     @Override
-    public ArrayEnd elements(boolean... array) {
+    public ArrayEnd elements(boolean[] array) {
         // Clone array to prevent accidental modification in the meantime
         boolean[] arrayCloned = array.clone();
         run(() -> out.writeSerialArray(arrayCloned));
@@ -196,7 +196,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     }
 
     @Override
-    public ArrayEnd elements(byte... array) {
+    public ArrayEnd elements(byte[] array) {
         // Clone array to prevent accidental modification in the meantime
         byte[] arrayCloned = array.clone();
         run(() -> out.writeSerialArray(arrayCloned));
@@ -204,7 +204,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     }
 
     @Override
-    public ArrayEnd elements(char... array) {
+    public ArrayEnd elements(char[] array) {
         // Clone array to prevent accidental modification in the meantime
         char[] arrayCloned = array.clone();
         run(() -> out.writeSerialArray(arrayCloned));
@@ -212,7 +212,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     }
 
     @Override
-    public ArrayEnd elements(short... array) {
+    public ArrayEnd elements(short[] array) {
         // Clone array to prevent accidental modification in the meantime
         short[] arrayCloned = array.clone();
         run(() -> out.writeSerialArray(arrayCloned));
@@ -220,7 +220,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     }
 
     @Override
-    public ArrayEnd elements(int... array) {
+    public ArrayEnd elements(int[] array) {
         // Clone array to prevent accidental modification in the meantime
         int[] arrayCloned = array.clone();
         run(() -> out.writeSerialArray(arrayCloned));
@@ -228,7 +228,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     }
 
     @Override
-    public ArrayEnd elements(long... array) {
+    public ArrayEnd elements(long[] array) {
         // Clone array to prevent accidental modification in the meantime
         long[] arrayCloned = array.clone();
         run(() -> out.writeSerialArray(arrayCloned));
@@ -236,7 +236,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     }
 
     @Override
-    public ArrayEnd elements(float... array) {
+    public ArrayEnd elements(float[] array) {
         // Clone array to prevent accidental modification in the meantime
         float[] arrayCloned = array.clone();
         run(() -> out.writeSerialArray(arrayCloned));
@@ -244,7 +244,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     }
 
     @Override
-    public ArrayEnd elements(double... array) {
+    public ArrayEnd elements(double[] array) {
         // Clone array to prevent accidental modification in the meantime
         double[] arrayCloned = array.clone();
         run(() -> out.writeSerialArray(arrayCloned));
@@ -592,49 +592,49 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     }
 
     @Override
-    public SlotPrimitiveFields value(boolean b) {
+    public SlotPrimitiveFields booleanValue(boolean b) {
         primitiveFieldsActions.add(dataOut -> dataOut.writeBoolean(b));
         return this;
     }
 
     @Override
-    public SlotPrimitiveFields value(byte b) {
+    public SlotPrimitiveFields byteValue(byte b) {
         primitiveFieldsActions.add(dataOut -> dataOut.writeByte(b));
         return this;
     }
 
     @Override
-    public SlotPrimitiveFields value(char c) {
+    public SlotPrimitiveFields charValue(char c) {
         primitiveFieldsActions.add(dataOut -> dataOut.writeChar(c));
         return this;
     }
 
     @Override
-    public SlotPrimitiveFields value(short s) {
+    public SlotPrimitiveFields shortValue(short s) {
         primitiveFieldsActions.add(dataOut -> dataOut.writeShort(s));
         return this;
     }
 
     @Override
-    public SlotPrimitiveFields value(int i) {
+    public SlotPrimitiveFields intValue(int i) {
         primitiveFieldsActions.add(dataOut -> dataOut.writeInt(i));
         return this;
     }
 
     @Override
-    public SlotPrimitiveFields value(long l) {
+    public SlotPrimitiveFields longValue(long l) {
         primitiveFieldsActions.add(dataOut -> dataOut.writeLong(l));
         return this;
     }
 
     @Override
-    public SlotPrimitiveFields value(float f) {
+    public SlotPrimitiveFields floatValue(float f) {
         primitiveFieldsActions.add(dataOut -> dataOut.writeFloat(f));
         return this;
     }
 
     @Override
-    public SlotPrimitiveFields value(double d) {
+    public SlotPrimitiveFields doubleValue(double d) {
         primitiveFieldsActions.add(dataOut -> dataOut.writeDouble(d));
         return this;
     }

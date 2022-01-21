@@ -58,7 +58,7 @@ public class SimpleSerialBuilderCodeGen {
      *
      * byte[] serialData = SimpleSerialBuilder.startSerializableObject(handle1)
      *     .beginClassData("java.util.ArrayList", 8683452581122892189L)
-     *         .primitiveField("size", 2)
+     *         .primitiveIntField("size", 2)
      *         .writeObjectWith(writer -> {
      *             writer.write(new byte[] {0, 0, 0, 2});
      *             writer.string("test");

@@ -1,63 +1,61 @@
 package marcono1234.serialization.serialbuilder.builder.api.object.serializable;
 
 public interface SlotPrimitiveFields<C> {
-    // TODO: Choose different names for primitive field methods to avoid accidentally calling wrong overload (e.g. for byte or short)?
-
     /**
-     * Writes a primitive field value.
+     * Writes a {@code boolean} field value.
      *
      * @return <i>this</i>
      */
-    SlotPrimitiveFields<C> value(boolean b);
+    SlotPrimitiveFields<C> booleanValue(boolean b);
 
     /**
-     * Writes a primitive field value.
+     * Writes a {@code byte} field value.
      *
      * @return <i>this</i>
      */
-    SlotPrimitiveFields<C> value(byte b);
+    SlotPrimitiveFields<C> byteValue(byte b);
 
     /**
-     * Writes a primitive field value.
+     * Writes a {@code char} field value.
      *
      * @return <i>this</i>
      */
-    SlotPrimitiveFields<C> value(char c);
+    SlotPrimitiveFields<C> charValue(char c);
 
     /**
-     * Writes a primitive field value.
+     * Writes a {@code short} field value.
      *
      * @return <i>this</i>
      */
-    SlotPrimitiveFields<C> value(short s);
+    SlotPrimitiveFields<C> shortValue(short s);
 
     /**
-     * Writes a primitive field value.
+     * Writes an {@code int} field value.
      *
      * @return <i>this</i>
      */
-    SlotPrimitiveFields<C> value(int i);
+    SlotPrimitiveFields<C> intValue(int i);
 
     /**
-     * Writes a primitive field value.
+     * Writes a {@code long} field value.
      *
      * @return <i>this</i>
      */
-    SlotPrimitiveFields<C> value(long l);
+    SlotPrimitiveFields<C> longValue(long l);
 
     /**
-     * Writes a primitive field value.
+     * Writes a {@code float} field value.
      *
      * @return <i>this</i>
      */
-    SlotPrimitiveFields<C> value(float f);
+    SlotPrimitiveFields<C> floatValue(float f);
 
     /**
-     * Writes a primitive field value.
+     * Writes a {@code double} field value.
      *
      * @return <i>this</i>
      */
-    SlotPrimitiveFields<C> value(double d);
+    SlotPrimitiveFields<C> doubleValue(double d);
 
     /**
      * Ends the primitive field values.

@@ -114,7 +114,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     }
 
     @Override
-    public Object array(Handle unassignedHandle, boolean... array) {
+    public Object array(Handle unassignedHandle, boolean[] array) {
         verifyUnassigned(unassignedHandle);
         boolean[] arrayF = array.clone();
         run(start -> beginArray(start, unassignedHandle, boolean.class).elements(arrayF).endArray());
@@ -122,7 +122,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     }
 
     @Override
-    public Object array(Handle unassignedHandle, byte... array) {
+    public Object array(Handle unassignedHandle, byte[] array) {
         verifyUnassigned(unassignedHandle);
         byte[] arrayF = array.clone();
         run(start -> beginArray(start, unassignedHandle, byte.class).elements(arrayF).endArray());
@@ -130,7 +130,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     }
 
     @Override
-    public Object array(Handle unassignedHandle, char... array) {
+    public Object array(Handle unassignedHandle, char[] array) {
         verifyUnassigned(unassignedHandle);
         char[] arrayF = array.clone();
         run(start -> beginArray(start, unassignedHandle, char.class).elements(arrayF).endArray());
@@ -138,7 +138,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     }
 
     @Override
-    public Object array(Handle unassignedHandle, short... array) {
+    public Object array(Handle unassignedHandle, short[] array) {
         verifyUnassigned(unassignedHandle);
         short[] arrayF = array.clone();
         run(start -> beginArray(start, unassignedHandle, short.class).elements(arrayF).endArray());
@@ -146,7 +146,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     }
 
     @Override
-    public Object array(Handle unassignedHandle, int... array) {
+    public Object array(Handle unassignedHandle, int[] array) {
         verifyUnassigned(unassignedHandle);
         int[] arrayF = array.clone();
         run(start -> beginArray(start, unassignedHandle, int.class).elements(arrayF).endArray());
@@ -154,7 +154,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     }
 
     @Override
-    public Object array(Handle unassignedHandle, long... array) {
+    public Object array(Handle unassignedHandle, long[] array) {
         verifyUnassigned(unassignedHandle);
         long[] arrayF = array.clone();
         run(start -> beginArray(start, unassignedHandle, long.class).elements(arrayF).endArray());
@@ -162,7 +162,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     }
 
     @Override
-    public Object array(Handle unassignedHandle, float... array) {
+    public Object array(Handle unassignedHandle, float[] array) {
         verifyUnassigned(unassignedHandle);
         float[] arrayF = array.clone();
         run(start -> beginArray(start, unassignedHandle, float.class).elements(arrayF).endArray());
@@ -170,7 +170,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     }
 
     @Override
-    public Object array(Handle unassignedHandle, double... array) {
+    public Object array(Handle unassignedHandle, double[] array) {
         verifyUnassigned(unassignedHandle);
         double[] arrayF = array.clone();
         run(start -> beginArray(start, unassignedHandle, double.class).elements(arrayF).endArray());
@@ -356,58 +356,58 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     }
 
     @Override
-    public SerializableObjectData primitiveField(String fieldName, boolean value) {
+    public SerializableObjectData primitiveBooleanField(String fieldName, boolean value) {
         Objects.requireNonNull(fieldName);
-        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, boolean.class, primitiveFields -> primitiveFields.value(value)));
+        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, boolean.class, primitiveFields -> primitiveFields.booleanValue(value)));
         return this;
     }
 
     @Override
-    public SerializableObjectData primitiveField(String fieldName, byte value) {
+    public SerializableObjectData primitiveByteField(String fieldName, byte value) {
         Objects.requireNonNull(fieldName);
-        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, byte.class, primitiveFields -> primitiveFields.value(value)));
+        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, byte.class, primitiveFields -> primitiveFields.byteValue(value)));
         return this;
     }
 
     @Override
-    public SerializableObjectData primitiveField(String fieldName, char value) {
+    public SerializableObjectData primitiveCharField(String fieldName, char value) {
         Objects.requireNonNull(fieldName);
-        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, char.class, primitiveFields -> primitiveFields.value(value)));
+        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, char.class, primitiveFields -> primitiveFields.charValue(value)));
         return this;
     }
 
     @Override
-    public SerializableObjectData primitiveField(String fieldName, short value) {
+    public SerializableObjectData primitiveShortField(String fieldName, short value) {
         Objects.requireNonNull(fieldName);
-        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, short.class, primitiveFields -> primitiveFields.value(value)));
+        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, short.class, primitiveFields -> primitiveFields.shortValue(value)));
         return this;
     }
 
     @Override
-    public SerializableObjectData primitiveField(String fieldName, int value) {
+    public SerializableObjectData primitiveIntField(String fieldName, int value) {
         Objects.requireNonNull(fieldName);
-        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, int.class, primitiveFields -> primitiveFields.value(value)));
+        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, int.class, primitiveFields -> primitiveFields.intValue(value)));
         return this;
     }
 
     @Override
-    public SerializableObjectData primitiveField(String fieldName, long value) {
+    public SerializableObjectData primitiveLongField(String fieldName, long value) {
         Objects.requireNonNull(fieldName);
-        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, long.class, primitiveFields -> primitiveFields.value(value)));
+        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, long.class, primitiveFields -> primitiveFields.longValue(value)));
         return this;
     }
 
     @Override
-    public SerializableObjectData primitiveField(String fieldName, float value) {
+    public SerializableObjectData primitiveFloatField(String fieldName, float value) {
         Objects.requireNonNull(fieldName);
-        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, float.class, primitiveFields -> primitiveFields.value(value)));
+        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, float.class, primitiveFields -> primitiveFields.floatValue(value)));
         return this;
     }
 
     @Override
-    public SerializableObjectData primitiveField(String fieldName, double value) {
+    public SerializableObjectData primitiveDoubleField(String fieldName, double value) {
         Objects.requireNonNull(fieldName);
-        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, double.class, primitiveFields -> primitiveFields.value(value)));
+        currentSerializableClassDataList.getLast().getLast().primitiveFieldDataList.add(new PrimitiveFieldData(fieldName, double.class, primitiveFields -> primitiveFields.doubleValue(value)));
         return this;
     }
 
@@ -535,49 +535,49 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
                 }
 
                 @Override
-                public Void array(Handle unassignedHandle, boolean... array) {
+                public Void array(Handle unassignedHandle, boolean[] array) {
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
-                public Void array(Handle unassignedHandle, byte... array) {
+                public Void array(Handle unassignedHandle, byte[] array) {
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
-                public Void array(Handle unassignedHandle, char... array) {
+                public Void array(Handle unassignedHandle, char[] array) {
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
-                public Void array(Handle unassignedHandle, short... array) {
+                public Void array(Handle unassignedHandle, short[] array) {
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
-                public Void array(Handle unassignedHandle, int... array) {
+                public Void array(Handle unassignedHandle, int[] array) {
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
-                public Void array(Handle unassignedHandle, long... array) {
+                public Void array(Handle unassignedHandle, long[] array) {
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
-                public Void array(Handle unassignedHandle, float... array) {
+                public Void array(Handle unassignedHandle, float[] array) {
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
-                public Void array(Handle unassignedHandle, double... array) {
+                public Void array(Handle unassignedHandle, double[] array) {
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }

@@ -45,7 +45,7 @@ Produces the output:
 ```java
 byte[] serialData = SimpleSerialBuilder.startSerializableObject()
     .beginClassData("java.lang.Boolean", -3665804199014368530L)
-        .primitiveField("value", true)
+        .primitiveBooleanField("value", true)
     .endClassData()
 .endObject();
 ```
