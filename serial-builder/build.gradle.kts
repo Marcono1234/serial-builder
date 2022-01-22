@@ -41,3 +41,9 @@ tasks.javadoc {
 
     shouldRunAfter(tasks.test)
 }
+
+// Make build reproducible
+tasks.withType<AbstractArchiveTask>().configureEach {
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
+}

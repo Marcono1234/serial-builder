@@ -54,3 +54,9 @@ tasks.jar {
         attributes["Main-Class"] = "marcono1234.serialization.serialbuilder.codegen.Main"
     }
 }
+
+// Make build reproducible
+tasks.withType<AbstractArchiveTask>().configureEach {
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
+}
