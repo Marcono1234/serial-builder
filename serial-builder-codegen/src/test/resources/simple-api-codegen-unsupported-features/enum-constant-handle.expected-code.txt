@@ -1,0 +1,11 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$EnumConstantHandle", 1L)
+        .beginObjectField("values", "java.lang.Object[]")
+            .beginObjectArray("java.lang.Object[]")
+                .enumConstant("java.lang.Thread$State", "NEW")
+                // Unsupported handle usage: Enum constant
+                .enumConstant("java.lang.Thread$State", "NEW")
+            .endArray()
+        .endField()
+    .endClassData()
+.endObject();

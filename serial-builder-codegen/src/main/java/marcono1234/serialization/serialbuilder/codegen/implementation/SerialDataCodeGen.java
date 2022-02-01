@@ -13,6 +13,7 @@ import marcono1234.serialization.serialbuilder.codegen.implementation.streamdata
 import marcono1234.serialization.serialbuilder.codegen.implementation.streamdata.SerializableObject.SerializableClassData.PrimitiveFieldValue;
 import marcono1234.serialization.serialbuilder.codegen.implementation.streamdata.StreamObject;
 import marcono1234.serialization.serialbuilder.codegen.implementation.streamdata.StringObject;
+import marcono1234.serialization.serialbuilder.codegen.implementation.streamdata.WrappedUnassignableObject;
 import marcono1234.serialization.serialbuilder.codegen.implementation.streamdata.WritableStreamObject;
 import marcono1234.serialization.serialbuilder.codegen.implementation.streamdata.array.ArrayObject;
 import marcono1234.serialization.serialbuilder.codegen.implementation.streamdata.array.ObjectArrayObject;
@@ -127,7 +128,7 @@ public class SerialDataCodeGen implements Closeable {
         } else if (streamObject instanceof ProxyObject proxyObject) {
             proxyObject.writeTopLevelObject(codeWriter, handleManager, variableNameManager);
         } else {
-            throw new UnsupportedStreamFeatureException("Top level object " + streamObject);
+            throw new UnsupportedStreamFeatureException("Top level object type " + streamObject.getClass());
         }
 
         if (dataIn.read() != -1) {
@@ -157,13 +158,21 @@ public class SerialDataCodeGen implements Closeable {
                     @SuppressWarnings("unchecked")
                     var handleT = (HandleManager.Handle<? extends HandleAssignableObject>) handle;
                     yield new HandleObject(handleT);
-                } else if (StringObject.class.isAssignableFrom(referencedObjectType)) {
-                    StringObject referencedObject = (StringObject) handle.getReferencedObject().orElseThrow(() -> new AssertionError("String object should already be assigned"));
-                    // Currently, string handles are not supported, unwrap it
-                    yield new StringObject(referencedObject.value(), true);
                 }
 
-                throw new UnsupportedStreamFeatureException("Unsupported object type " + referencedObjectType);
+                // Cover objects for which builder API does not support referencing handle
+                String typeDescription;
+                if (StringObject.class.isAssignableFrom(referencedObjectType)) {
+                    typeDescription = "String object";
+                } else if (EnumConstantObject.class.isAssignableFrom(referencedObjectType)) {
+                    typeDescription = "Enum constant";
+                } else if (ClassObject.class.isAssignableFrom(referencedObjectType)) {
+                    typeDescription = "Class object";
+                } else {
+                    throw new UnsupportedStreamFeatureException("Unsupported object type as handle value: " + referencedObjectType);
+                }
+                WritableStreamObject referencedObject = (WritableStreamObject) handle.getReferencedObject().orElseThrow(() -> new AssertionError(typeDescription + " should already be assigned"));
+                yield new WrappedUnassignableObject(referencedObject, typeDescription);
             }
             case TC_NULL -> NullObject.INSTANCE;
             case TC_EXCEPTION -> throw new UnsupportedStreamFeatureException("TC_EXCEPTION");
@@ -587,7 +596,7 @@ public class SerialDataCodeGen implements Closeable {
             }
             stringBuilder.append(c);
         }
-        StringObject stringObject = new StringObject(stringBuilder.toString(), false);
+        StringObject stringObject = new StringObject(stringBuilder.toString());
         handleManager.createAssignedHandle(stringObject);
         return stringObject;
     }
@@ -623,7 +632,7 @@ public class SerialDataCodeGen implements Closeable {
             classDesc.typeName(),
             constantString.value(),
             isMissingEnumSuperType,
-            constantString.isHandle() || classDesc.usesAnyHandle()
+            constantString.isHandle() || readClassDesc.isHandle() || classDesc.usesAnyHandle()
         );
         handle.setObject(enumConstantObject);
         return enumConstantObject;
@@ -689,7 +698,7 @@ public class SerialDataCodeGen implements Closeable {
                     ReadString fieldType = readNonNullStringOrRef();
                     String fieldJvmTypeName = fieldType.value();
                     if (fieldJvmTypeName.charAt(0) != typeCode) {
-                        throw new UnsupportedStreamFeatureException("Mismatching type code and field type name: " + fieldJvmTypeName);
+                        throw new StreamCorruptedException("Mismatching type code and field type name: " + fieldJvmTypeName);
                     }
 
                     String fieldTypeName = TypeNameHelper.createClassTypeName(fieldJvmTypeName, true);

@@ -82,7 +82,7 @@ public class SimpleSerialBuilderCodeGen {
         try (SerialDataCodeGen codeGen = new SerialDataCodeGen(new ByteArrayInputStream(serializationData))) {
             return codeGen.generateCode(true, true);
         } catch (IOException e) {
-            throw new CodeGenException("Code generation failed", e);
+            throw new CodeGenException("Code generation failed: " + e.getMessage(), e);
         }
     }
 }

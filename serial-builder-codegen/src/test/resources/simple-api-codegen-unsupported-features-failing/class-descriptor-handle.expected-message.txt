@@ -1,0 +1,1 @@
+Code generation failed: Unsupported feature: Unsupported object type as handle value: class marcono1234.serialization.serialbuilder.codegen.implementation.streamdata.descriptor.NonProxyDescriptorData

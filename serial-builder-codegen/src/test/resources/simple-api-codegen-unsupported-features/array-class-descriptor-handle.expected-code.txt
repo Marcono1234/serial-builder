@@ -1,0 +1,22 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$ArrayClassDescriptorHandle", 1L)
+        .beginObjectField("classes", "java.lang.Class[]")
+            .beginObjectArray("java.lang.Class[]")
+                // Created class descriptor might not be identical (though usually does not matter)
+                .arrayClass("int[]")
+                // Created class descriptor might not be identical (though usually does not matter)
+                .arrayClass("java.lang.String[]")
+            .endArray()
+        .endField()
+        .beginObjectField("values1", "java.lang.Object")
+            // Unsupported handle usage: Array type descriptor
+            .array(new int[] {1})
+        .endField()
+        .beginObjectField("values2", "java.io.Serializable")
+            // Unsupported handle usage: Array type descriptor
+            .beginObjectArray("java.lang.String[]")
+                .string("a")
+            .endArray()
+        .endField()
+    .endClassData()
+.endObject();

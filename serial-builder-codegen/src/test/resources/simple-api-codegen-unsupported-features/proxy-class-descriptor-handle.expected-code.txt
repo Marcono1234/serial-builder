@@ -1,0 +1,27 @@
+Handle handle1 = new Handle();
+
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$ProxyClassDescriptorHandle", 1L)
+        .beginObjectField("p1", "java.lang.Object")
+            .beginProxyObject("java.lang.Runnable")
+                .beginSerializableInvocationHandler(handle1)
+                    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$InvocationHandler1", 1L)
+                    .endClassData()
+                .endObject()
+            .endProxyObject()
+        .endField()
+        // Unsupported handle usage: Object field type name
+        .beginObjectField("p2", "java.lang.Object")
+            .beginProxyObject("java.lang.Runnable")
+                .invocationHandlerHandle(handle1)
+            .endProxyObject()
+        .endField()
+        // Unsupported handle usage: Object field type name
+        .beginObjectField("p3", "java.lang.Object")
+            // Unsupported handle usage: Class descriptor
+            .beginProxyObject("java.util.concurrent.Callable")
+                .invocationHandlerHandle(handle1)
+            .endProxyObject()
+        .endField()
+    .endClassData()
+.endObject();

@@ -3,11 +3,18 @@ package marcono1234.serialization.serialbuilder.codegen.implementation.streamdat
 import marcono1234.serialization.serialbuilder.codegen.implementation.HandleManager;
 import marcono1234.serialization.serialbuilder.codegen.implementation.VariableNameManager;
 import marcono1234.serialization.serialbuilder.codegen.implementation.writer.CodeWriter;
-import marcono1234.serialization.serialbuilder.codegen.implementation.writer.LiteralsHelper;
 
-public record StringObject(String value) implements WritableStreamObject {
+/**
+ * Represents the reference to a {@link WritableStreamObject} which does not implement {@link HandleAssignableObject}.
+ */
+public record WrappedUnassignableObject(
+    WritableStreamObject object,
+    /** Describes the type of {@link #object} in a human-readable way */
+    String typeDescription
+) implements WritableStreamObject {
     @Override
     public void writeCode(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager) {
-        writer.writeLine(".string(" + LiteralsHelper.createStringLiteral(value) + ")");
+        writer.writeUnsupportedHandleUsageComment(typeDescription);
+        object.writeCode(writer, handleManager, variableNameManager);
     }
 }

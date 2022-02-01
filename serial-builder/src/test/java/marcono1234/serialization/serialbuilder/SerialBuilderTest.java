@@ -22,7 +22,6 @@ import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.HexFormat;
 
 import static java.io.ObjectStreamConstants.SC_BLOCK_DATA;
 import static java.io.ObjectStreamConstants.SC_ENUM;
@@ -79,7 +78,6 @@ class SerialBuilderTest {
 
         byte[] expectedData = serialize(new SimpleSerializableClass(1));
         assertArrayEquals(expectedData, actualData);
-        System.out.println(HexFormat.of().formatHex(expectedData));
     }
 
     private static class ClassWithNested implements Serializable {

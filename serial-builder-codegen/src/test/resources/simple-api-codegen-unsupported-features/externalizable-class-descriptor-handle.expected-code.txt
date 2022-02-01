@@ -1,0 +1,14 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$ExternalizableClassDescriptorHandle", 1L)
+        .beginObjectField("e1", "java.lang.Object")
+            .externalizableObject("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$ExternalizableClass", 1L, writer -> {
+            })
+        .endField()
+        // Unsupported handle usage: Object field type name
+        .beginObjectField("e2", "java.lang.Object")
+            // Unsupported handle usage: Class descriptor
+            .externalizableObject("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$ExternalizableClass", 1L, writer -> {
+            })
+        .endField()
+    .endClassData()
+.endObject();

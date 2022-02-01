@@ -1,0 +1,8 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.SerialBuilderTest$ClassWithEnum", 1L)
+        .beginObjectField("e", "marcono1234.serialization.serialbuilder.SerialBuilderTest$TestEnum")
+            // Missing descriptor for java.lang.Enum
+            .enumConstant("marcono1234.serialization.serialbuilder.SerialBuilderTest$TestEnum", "TEST")
+        .endField()
+    .endClassData()
+.endObject();

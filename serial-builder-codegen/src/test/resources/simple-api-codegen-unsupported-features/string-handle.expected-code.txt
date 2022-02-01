@@ -1,0 +1,12 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$StringHandle", 1L)
+        .beginObjectField("s1", "java.lang.String")
+            .string("test")
+        .endField()
+        // Unsupported handle usage: Object field type name
+        .beginObjectField("s2", "java.lang.String")
+            // Unsupported handle usage: String object
+            .string("test")
+        .endField()
+    .endClassData()
+.endObject();
