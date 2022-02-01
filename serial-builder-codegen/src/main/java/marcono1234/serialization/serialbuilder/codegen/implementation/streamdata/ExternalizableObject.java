@@ -34,10 +34,10 @@ public record ExternalizableObject(
         if (hasFields) {
             // Note: This is only about fields being declared in the descriptor; Externalizable
             // does not support field values
-            writer.writeComment("Fields of class descriptor have been omitted");
+            writer.writeComment("Serial data specified fields in class descriptor for Externalizable");
         }
         if (hasSuperClass) {
-            writer.writeComment("Super class of Externalizable has been omitted");
+            writer.writeComment("Serial data contained super class which cannot be preserved");
         }
 
         // Create copy because lambda creates a new scope

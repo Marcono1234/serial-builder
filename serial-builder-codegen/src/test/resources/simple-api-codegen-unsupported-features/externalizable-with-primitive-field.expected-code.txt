@@ -1,4 +1,4 @@
-// Fields of class descriptor have been omitted
+// Serial data specified fields in class descriptor for Externalizable
 byte[] serialData = SimpleSerialBuilder.externalizableObject("marcono1234.serialization.serialbuilder.SerialBuilderTest$ExternalizableClass", 1L, writer -> {
     writer.write(new byte[] {0, 0, 0, 5, 1});
     writer.string("test");

@@ -19,7 +19,7 @@ public record EnumConstantObject(
             writer.writeUnsupportedHandleUsageComment("Enum class descriptor or constant name");
         }
         if (isMissingSuperType) {
-            writer.writeComment("Missing descriptor for java.lang.Enum");
+            writer.writeComment("Serial data did not include descriptor for java.lang.Enum");
         }
 
         writer.writeLine(".enumConstant(" + LiteralsHelper.createStringLiteral(enumType) + ", " + LiteralsHelper.createStringLiteral(constantName) + ')');

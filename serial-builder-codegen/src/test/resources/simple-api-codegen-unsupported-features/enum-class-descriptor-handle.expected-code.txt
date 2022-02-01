@@ -1,11 +1,11 @@
 byte[] serialData = SimpleSerialBuilder.startSerializableObject()
     .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$EnumClassDescriptorHandle", 1L)
         .beginObjectField("c", "java.lang.Class")
-            // Created class descriptor might not be identical (though usually does not matter)
+            // Code might not create identical class descriptor (though usually does not matter)
             .enumClass("java.lang.Thread$State")
         .endField()
         .beginObjectField("value", "java.lang.Object")
-            // Unsupported handle usage: Enum class descriptor or constant name
+            // Unsupported handle usage in serial data: Enum class descriptor or constant name
             .enumConstant("java.lang.Thread$State", "NEW")
         .endField()
     .endClassData()

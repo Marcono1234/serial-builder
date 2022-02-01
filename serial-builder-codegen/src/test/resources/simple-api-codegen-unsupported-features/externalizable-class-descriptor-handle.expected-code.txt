@@ -4,9 +4,9 @@ byte[] serialData = SimpleSerialBuilder.startSerializableObject()
             .externalizableObject("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$ExternalizableClass", 1L, writer -> {
             })
         .endField()
-        // Unsupported handle usage: Object field type name
+        // Unsupported handle usage in serial data: Object field type name
         .beginObjectField("e2", "java.lang.Object")
-            // Unsupported handle usage: Class descriptor
+            // Unsupported handle usage in serial data: Class descriptor
             .externalizableObject("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$ExternalizableClass", 1L, writer -> {
             })
         .endField()

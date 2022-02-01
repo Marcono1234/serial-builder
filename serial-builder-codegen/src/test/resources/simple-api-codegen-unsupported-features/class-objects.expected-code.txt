@@ -2,29 +2,29 @@ byte[] serialData = SimpleSerialBuilder.startSerializableObject()
     .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableWithClasses", 1L)
         .beginObjectField("classes", "java.lang.Class[]")
             .beginObjectArray("java.lang.Class[]")
-                // Created class descriptor might not be identical (though usually does not matter)
+                // Code might not create identical class descriptor (though usually does not matter)
                 .serializableClass("java.lang.Number", -8742448824652078965L)
-                // Unsupported handle usage: Class descriptor uses handle
-                // Created class descriptor might not be identical (though usually does not matter)
+                // Unsupported handle usage in serial data: Class descriptor uses handle
+                // Code might not create identical class descriptor (though usually does not matter)
                 .serializableClass("java.lang.Integer", 1360826667806852920L)
-                // Unsupported handle usage: Class object
-                // Unsupported handle usage: Class descriptor uses handle
-                // Created class descriptor might not be identical (though usually does not matter)
+                // Unsupported handle usage in serial data: Class object
+                // Unsupported handle usage in serial data: Class descriptor uses handle
+                // Code might not create identical class descriptor (though usually does not matter)
                 .serializableClass("java.lang.Integer", 1360826667806852920L)
-                // Created class descriptor might not be identical (though usually does not matter)
+                // Code might not create identical class descriptor (though usually does not matter)
                 .enumClass("java.lang.Thread$State")
-                // Created class descriptor might not be identical (though usually does not matter)
+                // Code might not create identical class descriptor (though usually does not matter)
                 .serializableClass("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass", 1L)
-                // Created class descriptor might not be identical (though usually does not matter)
+                // Code might not create identical class descriptor (though usually does not matter)
                 .externalizableClass("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$ExternalizableClass", 1L)
-                // Created class descriptor might not be identical (though usually does not matter)
+                // Code might not create identical class descriptor (though usually does not matter)
                 .nonSerializableClass("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$NonSerializableClass")
-                // Created class descriptor might not be identical (though usually does not matter)
+                // Code might not create identical class descriptor (though usually does not matter)
                 .arrayClass("int[]")
-                // Created class descriptor might not be identical (though usually does not matter)
+                // Code might not create identical class descriptor (though usually does not matter)
                 .proxyClass("java.lang.Runnable")
-                // Unsupported handle usage: Class descriptor uses handle
-                // Created class descriptor might not be identical (though usually does not matter)
+                // Unsupported handle usage in serial data: Class descriptor uses handle
+                // Code might not create identical class descriptor (though usually does not matter)
                 .proxyClass("java.lang.Runnable")
             .endArray()
         .endField()

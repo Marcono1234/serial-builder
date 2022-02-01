@@ -62,7 +62,7 @@ public class CodeWriter {
      */
     public void writeUnsupportedHandleUsageComment(String usageDescription) {
         if (writeUnsupportedHandleComments) {
-            writeComment("Unsupported handle usage: " + usageDescription);
+            writeComment("Unsupported handle usage in serial data: " + usageDescription);
         }
     }
 

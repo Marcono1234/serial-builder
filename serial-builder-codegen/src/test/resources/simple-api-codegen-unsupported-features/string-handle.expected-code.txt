@@ -3,9 +3,9 @@ byte[] serialData = SimpleSerialBuilder.startSerializableObject()
         .beginObjectField("s1", "java.lang.String")
             .string("test")
         .endField()
-        // Unsupported handle usage: Object field type name
+        // Unsupported handle usage in serial data: Object field type name
         .beginObjectField("s2", "java.lang.String")
-            // Unsupported handle usage: String object
+            // Unsupported handle usage in serial data: String object
             .string("test")
         .endField()
     .endClassData()

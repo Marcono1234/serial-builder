@@ -3,7 +3,7 @@ byte[] serialData = SimpleSerialBuilder.startSerializableObject()
         .beginObjectField("values", "java.lang.Object[]")
             .beginObjectArray("java.lang.Object[]")
                 .enumConstant("java.lang.Thread$State", "NEW")
-                // Unsupported handle usage: Enum constant
+                // Unsupported handle usage in serial data: Enum constant
                 .enumConstant("java.lang.Thread$State", "NEW")
             .endArray()
         .endField()

@@ -29,7 +29,7 @@ public record ClassObject(DescriptorStreamObject descriptorStreamObject, boolean
             }
 
             // Builder methods do not support setting most descriptor data (e.g. custom flags, fields, or supertypes)
-            writer.writeComment("Created class descriptor might not be identical (though usually does not matter)");
+            writer.writeComment("Code might not create identical class descriptor (though usually does not matter)");
 
             lineBuilder.append(".proxyClass(");
             Iterator<String> namesIterator = proxyClassDesc.interfaceNames().iterator();
@@ -49,7 +49,7 @@ public record ClassObject(DescriptorStreamObject descriptorStreamObject, boolean
             }
 
             // Builder methods do not support setting most descriptor data (e.g. custom flags, fields, or supertypes)
-            writer.writeComment("Created class descriptor might not be identical (though usually does not matter)");
+            writer.writeComment("Code might not create identical class descriptor (though usually does not matter)");
 
             String typeName = nonProxyClassDesc.typeName();
             long serialVersionUid = nonProxyClassDesc.serialVersionUid();
