@@ -219,7 +219,7 @@ public interface ObjectStart<C> {
      *      handle which should be assigned a reference to the written array
      * @param arrayType
      *      type of the array in the form returned by {@link Class#getTypeName()}, e.g.
-     *      {@code java.util.Map$Entry[]} or {@code int[]}
+     *      {@code java.util.Map$Entry[]}
      * @return <i>next step</i>
      */
     // Uses array type as parameter (instead of just component type) to avoid confusion
@@ -231,7 +231,7 @@ public interface ObjectStart<C> {
      *
      * @param arrayType
      *      type of the array in the form returned by {@link Class#getTypeName()}, e.g.
-     *      {@code java.util.Map$Entry[]} or {@code int[]}
+     *      {@code java.util.Map$Entry[]}
      * @return <i>next step</i>
      */
     default ObjectArrayElements<C> beginObjectArray(String arrayType) {
@@ -240,7 +240,10 @@ public interface ObjectStart<C> {
 
     private static String getArrayTypeName(Class<?> arrayType) {
         if (!arrayType.isArray()) {
-            throw new IllegalArgumentException("Not an array type: " + arrayType);
+            throw new IllegalArgumentException("Not an array type: " + arrayType.getTypeName());
+        }
+        if (arrayType.getComponentType().isPrimitive()) {
+            throw new IllegalArgumentException("Primitive array instead of object array: " + arrayType.getTypeName());
         }
         return arrayType.getTypeName();
     }
@@ -251,7 +254,7 @@ public interface ObjectStart<C> {
      * @param unassignedHandle
      *      handle which should be assigned a reference to the written array
      * @param arrayType
-     *      type of the array, e.g. {@code int[].class}
+     *      type of the array, e.g. {@code String[].class}
      * @return <i>next step</i>
      */
     default ObjectArrayElements<C> beginObjectArray(Handle unassignedHandle, Class<?> arrayType) {
@@ -262,7 +265,7 @@ public interface ObjectStart<C> {
      * Begins an array of objects. The next step are the array elements.
      *
      * @param arrayType
-     *      type of the array, e.g. {@code int[].class}
+     *      type of the array, e.g. {@code String[].class}
      * @return <i>next step</i>
      */
     default ObjectArrayElements<C> beginObjectArray(Class<?> arrayType) {
@@ -309,7 +312,7 @@ public interface ObjectStart<C> {
      * @param unassignedHandle
      *      handle which should be assigned a reference to the written array
      * @param arrayType
-     *      type of the array, e.g. {@code int[].class}
+     *      type of the array, e.g. {@code String[].class}
      * @param writer
      *      for writing the array elements
      * @return <i>next step</i>
@@ -324,7 +327,7 @@ public interface ObjectStart<C> {
      * and return the result of the last builder method to make sure the data is written correctly.
      *
      * @param arrayType
-     *      type of the array, e.g. {@code int[].class}
+     *      type of the array, e.g. {@code String[].class}
      * @param writer
      *      for writing the array elements
      * @return <i>next step</i>

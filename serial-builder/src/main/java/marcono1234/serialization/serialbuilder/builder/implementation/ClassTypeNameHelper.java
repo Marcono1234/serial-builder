@@ -6,14 +6,14 @@ public class ClassTypeNameHelper {
 
     public static String getPrimitiveTypeName(Class<?> fieldType) {
         if (!fieldType.isPrimitive()) {
-            throw new IllegalArgumentException("Not a primitive type: " + fieldType);
+            throw new IllegalArgumentException("Not a primitive type: " + fieldType.getTypeName());
         }
         return fieldType.getTypeName();
     }
 
     public static String getObjectTypeName(Class<?> fieldType) {
         if (fieldType.isPrimitive()) {
-            throw new IllegalArgumentException("Not an Object type: " + fieldType);
+            throw new IllegalArgumentException("Not an Object type: " + fieldType.getTypeName());
         }
         return fieldType.getTypeName();
     }
@@ -23,7 +23,7 @@ public class ClassTypeNameHelper {
         for (int i = 0; i < interfaces.length; i++) {
             Class<?> interface_ = interfaces[i];
             if (!interface_.isInterface()) {
-                throw new IllegalArgumentException("Not an interface: " + interface_);
+                throw new IllegalArgumentException("Not an interface: " + interface_.getTypeName());
             }
 
             interfacesNames[i] = interfaces[i].getTypeName();

@@ -196,19 +196,19 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
         return this;
     }
 
-    record ArrayData(Handle unassignedHandle, String arrayType) {
-        ArrayData {
+    record ObjectArrayData(Handle unassignedHandle, String arrayType) {
+        ObjectArrayData {
             verifyUnassigned(unassignedHandle);
             Objects.requireNonNull(arrayType);
         }
     }
 
-    private final Deque<ArrayData> pendingArrayData = new LinkedList<>();
-    
+    private final Deque<ObjectArrayData> pendingObjectArrayData = new LinkedList<>();
+
     @Override
     public ObjectArrayElements beginObjectArray(Handle unassignedHandle, String arrayType) {
         nestingDepth++;
-        pendingArrayData.addLast(new ArrayData(unassignedHandle, arrayType));
+        pendingObjectArrayData.addLast(new ObjectArrayData(unassignedHandle, arrayType));
         pendingObjectActions.addLast(new LinkedList<>());
         return this;
     }
@@ -216,7 +216,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     @Override
     public Object endArray() {
         nestingDepth--;
-        ArrayData arrayData = pendingArrayData.removeLast();
+        ObjectArrayData arrayData = pendingObjectArrayData.removeLast();
         Deque<ObjectWriterAction> elementActions = pendingObjectActions.removeLast();
         C result = run(start -> {
             var current = beginArray(start, arrayData.unassignedHandle, arrayData.arrayType).beginObjectElements();
@@ -344,7 +344,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
             Objects.requireNonNull(valueWriter);
 
             if (!fieldType.isPrimitive()) {
-                throw new IllegalArgumentException("Not a primitive type: " + fieldType);
+                throw new IllegalArgumentException("Not a primitive type: " + fieldType.getTypeName());
             }
         }
     }
