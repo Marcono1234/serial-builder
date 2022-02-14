@@ -14,8 +14,8 @@ If the provided serialization data cannot be recreated exactly using the serial-
 should normally not have any effect, an inline comment is written in the generated code. If the provided serialization
 data is malformed, or if it cannot be recreated at all, an exception is thrown. That should normally only happen when
 the data is valid according to the serialization format grammar, but cannot actually be read by `ObjectInputStream`, or
-when it is not 'interesting', such as a top level `String` object, and is therefore not supported by the serial-builder
-API. If you are missing support for a use case, feel free to create a GitHub issue.
+when it is not 'interesting' and is therefore not supported by the serial-builder API. If you are missing support for a
+use case, feel free to create a GitHub issue.
 
 For binary data written by `Externalizable.writeExternal` and the special `writeObject` method the generated code
 writes the data as one byte array because the serialization data includes no information about the data types. If you
@@ -30,7 +30,8 @@ should be used for that.
 Requires Java 17 or newer
 
 :warning: Code generation should not be performed for untrusted serialization data. Malicious serialization data might
-be able to cause a denial of service, or might be able to manipulate the generated code to perform malicious actions.
+be able to cause a denial of service for this code generation tool, or might be able to manipulate the generated code
+to perform malicious actions.
 
 ### Command line
 ```

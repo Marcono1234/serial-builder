@@ -213,7 +213,7 @@ public interface ObjectStart<C> {
     }
 
     /**
-     * Begins an array of objects and assigns a handle to it.
+     * Begins an array of objects and assigns a handle to it. The next step are the array elements.
      *
      * @param unassignedHandle
      *      handle which should be assigned a reference to the written array
@@ -227,7 +227,7 @@ public interface ObjectStart<C> {
     ObjectArrayElements<C> beginObjectArray(Handle unassignedHandle, String arrayType);
 
     /**
-     * Begins an array of objects.
+     * Begins an array of objects. The next step are the array elements.
      *
      * @param arrayType
      *      type of the array in the form returned by {@link Class#getTypeName()}, e.g.
@@ -246,7 +246,7 @@ public interface ObjectStart<C> {
     }
 
     /**
-     * Begins an array of objects and assigns a handle to it.
+     * Begins an array of objects and assigns a handle to it. The next step are the array elements.
      *
      * @param unassignedHandle
      *      handle which should be assigned a reference to the written array
@@ -259,7 +259,7 @@ public interface ObjectStart<C> {
     }
 
     /**
-     * Begins an array of objects.
+     * Begins an array of objects. The next step are the array elements.
      *
      * @param arrayType
      *      type of the array, e.g. {@code int[].class}

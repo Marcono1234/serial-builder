@@ -1,0 +1,3 @@
+byte[] serialData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+    writer.enumConstant("java.lang.Thread$State", "NEW");
+});

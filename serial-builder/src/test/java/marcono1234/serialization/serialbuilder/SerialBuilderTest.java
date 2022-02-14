@@ -3,6 +3,7 @@ package marcono1234.serialization.serialbuilder;
 import marcono1234.serialization.serialbuilder.builder.api.Enclosing;
 import marcono1234.serialization.serialbuilder.builder.api.Handle;
 import marcono1234.serialization.serialbuilder.builder.api.ObjectBuildingDataOutput;
+import marcono1234.serialization.serialbuilder.builder.api.ThrowingConsumer;
 import marcono1234.serialization.serialbuilder.builder.api.descriptor.DescriptorsList;
 import marcono1234.serialization.serialbuilder.builder.api.descriptor.nonproxy.NonProxyDescriptorStart;
 import marcono1234.serialization.serialbuilder.builder.api.object.serializable.SlotStart;
@@ -1191,6 +1192,187 @@ class SerialBuilderTest {
         .endObject();
         
         byte[] expectedData = serialize(new ExternalizableWithSelfReference());
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    private static byte[] serializeWith(ThrowingConsumer<ObjectOutputStream> writer) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (ObjectOutputStream objOut = new ObjectOutputStream(out)) {
+            writer.accept(objOut);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return out.toByteArray();
+    }
+
+    @Test
+    void noData() {
+        byte[] actualData = SerialBuilder.writeSerializationDataWith(writer -> {});
+
+        byte[] expectedData = serializeWith(objOut -> {});
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void topLevelBlockData() {
+        byte[] actualData = SerialBuilder.writeSerializationDataWith(writer -> {
+            writer.writeInt(1);
+            writer.writeBoolean(true);
+            writer.writeLong(5);
+            writer.writeDouble(1.5);
+        });
+
+        byte[] expectedData = serializeWith(objOut -> {
+            objOut.writeInt(1);
+            objOut.writeBoolean(true);
+            objOut.writeLong(5);
+            objOut.writeDouble(1.5);
+        });
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void topLevelMultipleObjects() {
+        byte[] actualData = SerialBuilder.writeSerializationDataWith(writer -> {
+            writer.beginArray()
+                .beginDescriptorHierarchy()
+                    .beginDescriptor()
+                        .typeWithUid(int[].class)
+                        .flags(SC_SERIALIZABLE)
+                    .endDescriptor()
+                .endDescriptorHierarchy()
+                .elements(new int[] {1, 2, 3})
+            .endArray();
+
+            writer.string("test");
+
+            writer.beginSerializableObject()
+                .beginDescriptorHierarchy()
+                    .beginDescriptor()
+                        .type(SimpleSerializableClass.class)
+                        .uid(SimpleSerializableClass.serialVersionUID)
+                        .flags(SC_SERIALIZABLE)
+                        .beginPrimitiveFieldDescriptors()
+                            .intField("i")
+                        .endPrimitiveFieldDescriptors()
+                    .endDescriptor()
+                .endDescriptorHierarchy()
+                .beginSlots()
+                    .beginSlot()
+                        .beginPrimitiveFields()
+                            .intValue(1)
+                        .endPrimitiveFields()
+                    .endSlot()
+                .endSlots()
+            .endObject();
+        });
+
+        byte[] expectedData = serializeWith(objOut -> {
+            objOut.writeObject(new int[] {1, 2, 3});
+            objOut.writeObject("test");
+            objOut.writeObject(new SimpleSerializableClass(1));
+        });
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void topLevelMixed_PrimitiveStartEnd() {
+        byte[] actualData = SerialBuilder.writeSerializationDataWith(writer -> {
+            writer.writeInt(1);
+            writer.string("test");
+            writer.writeLong(5);
+        });
+
+        byte[] expectedData = serializeWith(objOut -> {
+            objOut.writeInt(1);
+            objOut.writeObject("test");
+            objOut.writeLong(5);
+        });
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void topLevelMixed_ObjectStart_PrimitiveEnd() {
+        byte[] actualData = SerialBuilder.writeSerializationDataWith(writer -> {
+            writer.string("start");
+            writer.writeInt(1);
+        });
+
+        byte[] expectedData = serializeWith(objOut -> {
+            objOut.writeObject("start");
+            objOut.writeInt(1);
+        });
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void topLevelMixed_PrimitiveStart_ObjectEnd() {
+        byte[] actualData = SerialBuilder.writeSerializationDataWith(writer -> {
+            writer.writeInt(1);
+            writer.string("end");
+        });
+
+        byte[] expectedData = serializeWith(objOut -> {
+            objOut.writeInt(1);
+            objOut.writeObject("end");
+        });
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void topLevelMixed_ObjectStartEnd() {
+        byte[] actualData = SerialBuilder.writeSerializationDataWith(writer -> {
+            writer.string("start");
+            writer.writeInt(1);
+            writer.string("end");
+        });
+
+        byte[] expectedData = serializeWith(objOut -> {
+            objOut.writeObject("start");
+            objOut.writeInt(1);
+            objOut.writeObject("end");
+        });
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void topLevelMixed_Handle() {
+        Handle handle = new Handle();
+        byte[] actualData = SerialBuilder.writeSerializationDataWith(writer -> {
+            writer.writeInt(1);
+
+            writer.beginSerializableObject(handle)
+                .beginDescriptorHierarchy()
+                    .beginDescriptor()
+                        .type(SimpleSerializableClass.class)
+                        .uid(SimpleSerializableClass.serialVersionUID)
+                        .flags(SC_SERIALIZABLE)
+                        .beginPrimitiveFieldDescriptors()
+                            .intField("i")
+                        .endPrimitiveFieldDescriptors()
+                    .endDescriptor()
+                .endDescriptorHierarchy()
+                .beginSlots()
+                    .beginSlot()
+                        .beginPrimitiveFields()
+                            .intValue(1)
+                        .endPrimitiveFields()
+                    .endSlot()
+                .endSlots()
+            .endObject();
+
+            writer.writeFloat(1.5f);
+
+            writer.objectHandle(handle);
+        });
+
+        byte[] expectedData = serializeWith(objOut -> {
+            objOut.writeInt(1);
+            SimpleSerializableClass obj = new SimpleSerializableClass(1);
+            objOut.writeObject(obj);
+            objOut.writeFloat(1.5f);
+            objOut.writeObject(obj);
+        });
         assertArrayEquals(expectedData, actualData);
     }
 }

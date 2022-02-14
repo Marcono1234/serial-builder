@@ -1,0 +1,4 @@
+byte[] serialData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+    // Code might not create identical class descriptor (though usually does not matter)
+    writer.serializableClass("java.lang.String", -6849794470754667710L);
+});

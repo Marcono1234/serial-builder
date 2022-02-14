@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class SimpleSerialBuilderTest {
-    private <T> T deserialize(byte[] data) {
+    private static <T> T deserialize(byte[] data) {
         try (ObjectInputStream objIn = new ObjectInputStream(new ByteArrayInputStream(data))) {
             @SuppressWarnings("unchecked")
             T result = (T) objIn.readObject();
@@ -936,5 +936,165 @@ class SimpleSerialBuilderTest {
         assertTrue(Proxy.isProxyClass(actualObject.getClass()));
         Object actualInvocationHandler = Proxy.getInvocationHandler(actualObject);
         assertSame(actualObject, actualInvocationHandler);
+    }
+
+    private interface CheckAction {
+        void check(ObjectInputStream objIn) throws Exception;
+    }
+
+    private static void checkDeserialized(byte[] serialData, CheckAction checkAction) throws Exception {
+        ObjectInputStream objIn = new ObjectInputStream(new ByteArrayInputStream(serialData));
+        checkAction.check(objIn);
+        assertEquals(-1, objIn.read(), "Should have reached end of stream");
+        objIn.close();
+    }
+
+    @Test
+    void noData() throws Exception {
+        byte[] actualData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {});
+        checkDeserialized(actualData, objIn -> {
+            // Nothing to do; checkDeserialized validates that end of stream is reached
+        });
+    }
+
+    @Test
+    void topLevelBlockData() throws Exception {
+        byte[] actualData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+            writer.writeInt(1);
+            writer.writeBoolean(true);
+            writer.writeLong(5);
+            writer.writeDouble(1.5);
+        });
+
+        checkDeserialized(actualData, objIn -> {
+            assertEquals(1, objIn.readInt());
+            //noinspection SimplifiableAssertion
+            assertEquals(true, objIn.readBoolean());
+            assertEquals(5, objIn.readLong());
+            assertEquals(1.5, objIn.readDouble());
+        });
+    }
+
+    @Test
+    void topLevelMultipleObjects() throws Exception {
+        byte[] actualData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+            writer.array(new int[] {1, 2, 3});
+            writer.string("test");
+
+            writer.beginSerializableObject()
+                .beginClassData(SerializableClass.class)
+                    .primitiveIntField("i", 6)
+                    .beginObjectField("array", int[].class)
+                        .array(new int[] {4, 5, 6})
+                    .endField()
+                    .beginObjectField("s", String.class)
+                        .string("nested-test")
+                    .endField()
+                .endClassData()
+            .endObject();
+        });
+
+        checkDeserialized(actualData, objIn -> {
+            assertArrayEquals(new int[] {1, 2, 3}, (int[]) objIn.readObject());
+            assertEquals("test", objIn.readObject());
+
+            SerializableClass actualObject = (SerializableClass) objIn.readObject();
+            assertEquals(6, actualObject.i);
+            assertArrayEquals(new int[] {4, 5, 6}, actualObject.array);
+            assertEquals("nested-test", actualObject.s);
+        });
+    }
+
+    @Test
+    void topLevelMixed_PrimitiveStartEnd() throws Exception {
+        byte[] actualData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+            writer.writeInt(1);
+            writer.string("test");
+            writer.writeLong(5);
+        });
+
+        checkDeserialized(actualData, objIn -> {
+            assertEquals(1, objIn.readInt());
+            assertEquals("test", objIn.readObject());
+            assertEquals(5, objIn.readLong());
+        });
+    }
+
+    @Test
+    void topLevelMixed_ObjectStart_PrimitiveEnd() throws Exception {
+        byte[] actualData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+            writer.string("start");
+            writer.writeInt(1);
+        });
+
+        checkDeserialized(actualData, objIn -> {
+            assertEquals("start", objIn.readObject());
+            assertEquals(1, objIn.readInt());
+        });
+    }
+
+    @Test
+    void topLevelMixed_PrimitiveStart_ObjectEnd() throws Exception {
+        byte[] actualData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+            writer.writeInt(1);
+            writer.string("end");
+        });
+
+        checkDeserialized(actualData, objIn -> {
+            assertEquals(1, objIn.readInt());
+            assertEquals("end", objIn.readObject());
+        });
+    }
+
+    @Test
+    void topLevelMixed_ObjectStartEnd() throws Exception {
+        byte[] actualData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+            writer.string("start");
+            writer.writeInt(1);
+            writer.string("end");
+        });
+
+        checkDeserialized(actualData, objIn -> {
+            assertEquals("start", objIn.readObject());
+            assertEquals(1, objIn.readInt());
+            assertEquals("end", objIn.readObject());
+        });
+    }
+
+    @Test
+    void topLevelMixed_Handle() throws Exception {
+        Handle handle = new Handle();
+        byte[] actualData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+            writer.writeInt(1);
+
+            writer.beginSerializableObject(handle)
+                .beginClassData(SerializableClass.class)
+                    .primitiveIntField("i", 6)
+                    .beginObjectField("array", int[].class)
+                        .array(new int[] {4, 5, 6})
+                    .endField()
+                    .beginObjectField("s", String.class)
+                        .string("nested-test")
+                    .endField()
+                .endClassData()
+            .endObject();
+
+            writer.writeFloat(1.5f);
+
+            writer.objectHandle(handle);
+        });
+
+        checkDeserialized(actualData, objIn -> {
+            assertEquals(1, objIn.readInt());
+
+            SerializableClass actualObject = (SerializableClass) objIn.readObject();
+            assertEquals(6, actualObject.i);
+            assertArrayEquals(new int[] {4, 5, 6}, actualObject.array);
+            assertEquals("nested-test", actualObject.s);
+
+            assertEquals(1.5f, objIn.readFloat());
+
+            assertSame(actualObject, objIn.readObject());
+        });
     }
 }

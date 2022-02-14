@@ -1,14 +1,20 @@
 package marcono1234.serialization.serialbuilder.codegen.implementation.streamdata;
 
 import marcono1234.serialization.serialbuilder.codegen.implementation.HandleManager;
+import marcono1234.serialization.serialbuilder.codegen.implementation.SerialDataCodeGen;
 import marcono1234.serialization.serialbuilder.codegen.implementation.VariableNameManager;
 import marcono1234.serialization.serialbuilder.codegen.implementation.writer.CodeWriter;
 import marcono1234.serialization.serialbuilder.codegen.implementation.writer.LiteralsHelper;
+import marcono1234.serialization.serialbuilder.codegen.implementation.writer.TopLevelCodeWritable;
 
 import java.util.List;
 import java.util.Optional;
 
-public record SerializableObject(List<SerializableClassData> classDataList, HandleManager.Handle<SerializableObject> ownHandle) implements HandleAssignableObject {
+public record SerializableObject(
+    List<SerializableClassData> classDataList,
+    HandleManager.Handle<SerializableObject> ownHandle
+) implements HandleAssignableObject, TopLevelCodeWritable {
+
     public record SerializableClassData(
         String className,
         long serialVersionUid,
@@ -31,8 +37,9 @@ public record SerializableObject(List<SerializableClassData> classDataList, Hand
         writeData(writer, handleManager, variableNameManager, ".beginSerializableObject(", false);
     }
 
-    public void writeTopLevelObject(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager) {
-        writeData(writer, handleManager, variableNameManager, "byte[] serialData = SimpleSerialBuilder.startSerializableObject(", true);
+    @Override
+    public void writeTopLevelCode(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager) {
+        writeData(writer, handleManager, variableNameManager, SerialDataCodeGen.GENERATED_SERIAL_DATA_VARIABLE + "SimpleSerialBuilder.startSerializableObject(", true);
     }
 
     void writeData(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager, String methodCallString, boolean addTrailingSemicolon) {

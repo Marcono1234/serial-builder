@@ -28,8 +28,8 @@ public class SimpleSerialBuilderCodeGen {
      * normally not have any effect, an inline comment is written in the code. For cases where the serialization
      * data cannot be recreated at all, a {@link CodeGenException} is thrown. That should normally only happen when
      * the data is valid according to the serialization format grammar, but cannot actually be read by
-     * {@link java.io.ObjectInputStream}, or when it is not 'interesting', such as a top level {@code String} object,
-     * and is therefore not supported by the serial-builder API.
+     * {@link java.io.ObjectInputStream}, or when it is not 'interesting' and is therefore not supported by the
+     * serial-builder API.
      *
      * <p><b>Warning:</b> This method should not be called with untrusted serialization data. Malicious serialization
      * data might be able to cause a denial of service for this method, or might be able to manipulate the generated

@@ -437,7 +437,18 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
         return this.endField();
     }
 
-    private ThrowingConsumer<marcono1234.serialization.serialbuilder.builder.api.ObjectBuildingDataOutput> createDataOutputConsumer(ThrowingConsumer<ObjectBuildingDataOutput> writer) {
+    /**
+     * Allows delegating calls on a {@link ObjectBuildingDataOutput} to a non-simple {@link marcono1234.serialization.serialbuilder.builder.api.ObjectBuildingDataOutput}.
+     * Once a non-simple {@code ObjectBuildingDataOutput} is passed to the returned {@code ThrowingConsumer}, it creates
+     * a simple {@code ObjectBuildingDataOutput} based on it which is then itself passed to the provided {@code writer}.
+     *
+     * @param writer
+     *      writing to a simple {@code ObjectBuildingDataOutput}
+     * @return
+     *      consumer of a non-simple {@code ObjectBuildingDataOutput}, which, when called, passes a simple
+     *      {@code ObjectBuildingDataOutput} to the {@code writer}
+     */
+    protected static ThrowingConsumer<marcono1234.serialization.serialbuilder.builder.api.ObjectBuildingDataOutput> createDataOutputConsumer(ThrowingConsumer<ObjectBuildingDataOutput> writer) {
         Objects.requireNonNull(writer);
         return nonSimpleWriter -> {
             @SuppressWarnings("unchecked")

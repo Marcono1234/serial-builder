@@ -62,6 +62,11 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     }
 
     private final ProtocolVersion protocolVersion;
+    /**
+     * Whether this builder is building a single object, or potentially multiple objects; see
+     * {@link #writeSerializationDataWith(ThrowingConsumer)}.
+     */
+    private final boolean isBuildingSingleObject;
     private final ByteArrayOutputStream binaryOut;
     private final UncheckedBlockDataOutputStream out;
     private final AtomicInteger nextHandleIndex = new AtomicInteger(0);
@@ -82,7 +87,8 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
      */
     private final Deque<List<Runnable>> pendingObjectsActions = new LinkedList<>();
 
-    private SerialBuilderImpl() {
+    private SerialBuilderImpl(boolean isBuildingSingleObject) {
+        this.isBuildingSingleObject = isBuildingSingleObject;
         protocolVersion = ProtocolVersion.V2;
         binaryOut = new ByteArrayOutputStream();
         out = new UncheckedBlockDataOutputStream(binaryOut);
@@ -715,6 +721,11 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
         return this;
     }
 
+    private byte[] getSerialData() {
+        out.close();
+        return binaryOut.toByteArray();
+    }
+
     @Override
     public Object endObject() {
         run(pendingPostObjectActions.removeLast());
@@ -731,8 +742,11 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
                 throw new AssertionError("Unprocessed element counts: " + objectArrayElementCounts);
             }
 
-            out.close();
-            return binaryOut.toByteArray();
+            if (isBuildingSingleObject) {
+                return getSerialData();
+            } else {
+                return null;
+            }
         } else {
             return this;
         }
@@ -740,7 +754,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
 
     @SuppressWarnings("unchecked")
     public static ObjectStart<byte[]> createStart() {
-        return new SerialBuilderImpl();
+        return new SerialBuilderImpl(true);
     }
 
     public static SerialBuilder.SerializableBuilderStart startSerializable(Handle unassignedHandle) {
@@ -771,5 +785,17 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
                 return delegate.descriptorHierarchy(writer);
             }
         };
+    }
+
+    public static byte[] writeSerializationDataWith(ThrowingConsumer<ObjectBuildingDataOutput> writer) {
+        SerialBuilderImpl serialBuilder = new SerialBuilderImpl(false);
+        serialBuilder.out.setBlockDataMode(true);
+        try {
+            writer.accept(serialBuilder.createPendingDataOutput());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        serialBuilder.out.setBlockDataMode(false);
+        return serialBuilder.getSerialData();
     }
 }

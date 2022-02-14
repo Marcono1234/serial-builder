@@ -1,9 +1,11 @@
 package marcono1234.serialization.serialbuilder.codegen.implementation.streamdata;
 
 import marcono1234.serialization.serialbuilder.codegen.implementation.HandleManager;
+import marcono1234.serialization.serialbuilder.codegen.implementation.SerialDataCodeGen;
 import marcono1234.serialization.serialbuilder.codegen.implementation.VariableNameManager;
 import marcono1234.serialization.serialbuilder.codegen.implementation.writer.CodeWriter;
 import marcono1234.serialization.serialbuilder.codegen.implementation.writer.LiteralsHelper;
+import marcono1234.serialization.serialbuilder.codegen.implementation.writer.TopLevelCodeWritable;
 
 import java.util.List;
 
@@ -17,14 +19,16 @@ public record ExternalizableObject(
     boolean hasFields,
     boolean hasSuperClass,
     HandleManager.Handle<ExternalizableObject> ownHandle
-) implements HandleAssignableObject {
+) implements HandleAssignableObject, TopLevelCodeWritable {
+
     @Override
     public void writeCode(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager) {
         writeData(writer, handleManager, variableNameManager, ".externalizableObject(", false);
     }
 
-    public void writeTopLevelObject(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager) {
-        writeData(writer, handleManager, variableNameManager, "byte[] serialData = SimpleSerialBuilder.externalizableObject(", true);
+    @Override
+    public void writeTopLevelCode(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager) {
+        writeData(writer, handleManager, variableNameManager, SerialDataCodeGen.GENERATED_SERIAL_DATA_VARIABLE + "SimpleSerialBuilder.externalizableObject(", true);
     }
 
     void writeData(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager, String methodCallString, boolean addTrailingSemicolon) {

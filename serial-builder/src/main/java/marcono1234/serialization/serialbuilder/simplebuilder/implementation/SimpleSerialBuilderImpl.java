@@ -53,4 +53,8 @@ public class SimpleSerialBuilderImpl extends DelegatingSimpleSerialBuilderImpl<b
             }
         };
     }
+
+    public static byte[] writeSerializationDataWith(ThrowingConsumer<ObjectBuildingDataOutput> writer) {
+        return SerialBuilderImpl.writeSerializationDataWith(createDataOutputConsumer(writer));
+    }
 }

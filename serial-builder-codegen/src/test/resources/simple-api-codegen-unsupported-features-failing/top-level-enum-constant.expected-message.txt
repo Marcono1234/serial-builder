@@ -1,1 +1,0 @@
-Code generation failed: Unsupported feature: Top level object type class marcono1234.serialization.serialbuilder.codegen.implementation.streamdata.EnumConstantObject

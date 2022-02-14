@@ -1,10 +1,14 @@
 package marcono1234.serialization.serialbuilder;
 
 import marcono1234.serialization.serialbuilder.builder.api.Handle;
+import marcono1234.serialization.serialbuilder.builder.api.ObjectBuildingDataOutput;
+import marcono1234.serialization.serialbuilder.builder.api.ThrowingConsumer;
 import marcono1234.serialization.serialbuilder.builder.api.descriptor.DescriptorHierarchyStart;
 import marcono1234.serialization.serialbuilder.builder.api.object.externalizable.ExternalizableObjectStart;
 import marcono1234.serialization.serialbuilder.builder.api.object.serializable.SerializableObjectStart;
 import marcono1234.serialization.serialbuilder.builder.implementation.SerialBuilderImpl;
+
+import java.util.Objects;
 
 /**
  * Provides static entry points for creating Java serialization data. The API structure follows closely the internal
@@ -118,5 +122,23 @@ public class SerialBuilder {
      */
     public static ExternalizableBuilderStart startExternalizableObject() {
         return startExternalizableObject(new Handle());
+    }
+
+    /**
+     * Writes serialization data using an {@link ObjectBuildingDataOutput}. This allows writing top level
+     * block data, writing multiple top level objects and writing top level objects for which no dedicated
+     * builder method is provided by this class.
+     *
+     * <p>This method is mainly intended for the special cases listed above. If only a single object should
+     * be written, the other builder methods of this class (such as {@link #startSerializableObject()}) should
+     * be preferred because their usage is more concise.
+     *
+     * @param writer
+     *      writes the objects and block data content
+     * @return the serialization data
+     */
+    public static byte[] writeSerializationDataWith(ThrowingConsumer<ObjectBuildingDataOutput> writer) {
+        Objects.requireNonNull(writer);
+        return SerialBuilderImpl.writeSerializationDataWith(writer);
     }
 }

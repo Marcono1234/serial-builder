@@ -124,7 +124,7 @@ class SimpleSerialBuilderCodeGenTest {
     @ParameterizedTest(name = "[{index}] {0}")
     @SerializationDataSource("/simple-api-codegen")
     // First parameter is used for display purposes
-    void codeGeneration(String fileName, byte[] serialData, String expectedCode) throws Exception {
+    void codeGeneration(@SuppressWarnings("unused") String fileName, byte[] serialData, String expectedCode) throws Exception {
         String actualCode = SimpleSerialBuilderCodeGen.generateCode(serialData);
         assertEquals(expectedCode, actualCode);
 
@@ -138,7 +138,7 @@ class SimpleSerialBuilderCodeGenTest {
     @ParameterizedTest(name = "[{index}] {0}")
     @SerializationDataSource("/simple-api-codegen-unsupported-features")
     // First parameter is used for display purposes
-    void codeGeneration_UnsupportedFeatures(String fileName, byte[] serialData, String expectedCode) throws Exception {
+    void codeGeneration_UnsupportedFeatures(@SuppressWarnings("unused") String fileName, byte[] serialData, String expectedCode) throws Exception {
         String actualCode = SimpleSerialBuilderCodeGen.generateCode(serialData);
         assertEquals(expectedCode, actualCode);
 
@@ -203,7 +203,7 @@ class SimpleSerialBuilderCodeGenTest {
     @ParameterizedTest(name = "[{index}] {0}")
     @SerializationDataSource(value = "/simple-api-codegen-unsupported-features-failing", type = SerializationDataSource.Type.FAILING)
     // First parameter is used for display purposes
-    void codeGeneration_UnsupportedFeatures_Failing(String fileName, byte[] serialData, String expectedExceptionMessage) {
+    void codeGeneration_UnsupportedFeatures_Failing(@SuppressWarnings("unused") String fileName, byte[] serialData, String expectedExceptionMessage) {
         var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCode(serialData));
         assertEquals(expectedExceptionMessage, e.getMessage());
     }

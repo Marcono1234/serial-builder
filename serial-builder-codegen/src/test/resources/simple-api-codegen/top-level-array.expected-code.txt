@@ -1,0 +1,5 @@
+byte[] serialData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+    writer.beginObjectArray("java.lang.Object[]")
+        .string("test")
+    .endArray();
+});

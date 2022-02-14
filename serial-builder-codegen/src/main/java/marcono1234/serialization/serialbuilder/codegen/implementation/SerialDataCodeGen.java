@@ -25,11 +25,13 @@ import marcono1234.serialization.serialbuilder.codegen.implementation.streamdata
 import marcono1234.serialization.serialbuilder.codegen.implementation.streamdata.descriptor.PrimitiveField.PrimitiveFieldType;
 import marcono1234.serialization.serialbuilder.codegen.implementation.streamdata.descriptor.ProxyDescriptorData;
 import marcono1234.serialization.serialbuilder.codegen.implementation.writer.CodeWriter;
+import marcono1234.serialization.serialbuilder.codegen.implementation.writer.TopLevelCodeWritable;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.DataInput;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutput;
@@ -84,6 +86,8 @@ public class SerialDataCodeGen implements Closeable {
 
     private static final HexFormat hexFormat = HexFormat.of().withPrefix("0x");
 
+    public static final String GENERATED_SERIAL_DATA_VARIABLE = "byte[] serialData = ";
+
     private final DataInputStream dataIn;
     private final HandleManager handleManager;
 
@@ -102,15 +106,10 @@ public class SerialDataCodeGen implements Closeable {
             throw new StreamCorruptedException("Invalid stream version");
         }
 
-        byte b = dataIn.readByte();
-        if (b == TC_BLOCKDATA || b == TC_BLOCKDATALONG) {
-            throw new UnsupportedStreamFeatureException("Top level block data");
-        }
-
         CodeWriter codeWriter = new CodeWriter(writeComments, writeUnsupportedHandleComments);
         VariableNameManager variableNameManager = new VariableNameManager();
 
-        StreamObject streamObject = readObject(b);
+        List<ObjectAnnotationContent> contents = readContents(true);
         List<String> usedHandleNames = handleManager.getUsedHandleNames();
         for (String handleName : usedHandleNames) {
             codeWriter.writeLine("Handle " + handleName + " = new Handle();");
@@ -121,19 +120,23 @@ public class SerialDataCodeGen implements Closeable {
             codeWriter.writeLine("");
         }
 
-        if (streamObject instanceof SerializableObject serializableObject) {
-            serializableObject.writeTopLevelObject(codeWriter, handleManager, variableNameManager);
-        } else if (streamObject instanceof ExternalizableObject externalizableObject) {
-            externalizableObject.writeTopLevelObject(codeWriter, handleManager, variableNameManager);
-        } else if (streamObject instanceof ProxyObject proxyObject) {
-            proxyObject.writeTopLevelObject(codeWriter, handleManager, variableNameManager);
+        // If only one top level writable, let it write its specialized serial-builder method
+        if (contents.size() == 1 && contents.get(0) instanceof ObjectAnnotationContent.ObjectObjectAnnotationContent objectContent && objectContent.object() instanceof TopLevelCodeWritable topLevelWritable) {
+            topLevelWritable.writeTopLevelCode(codeWriter, handleManager, variableNameManager);
         } else {
-            throw new UnsupportedStreamFeatureException("Top level object type " + streamObject.getClass());
-        }
+            String writerVarName = "writer";
+            variableNameManager.markNameUsed(writerVarName);
+            codeWriter.writeLine(GENERATED_SERIAL_DATA_VARIABLE + "SimpleSerialBuilder.writeSerializationDataWith(" + writerVarName + " -> {");
+            codeWriter.increaseIndentation();
 
-        if (dataIn.read() != -1) {
-            // Grammar seems to allow multiple top level values
-            throw new UnsupportedStreamFeatureException("Multiple top level values");
+            if (contents.isEmpty()) {
+                codeWriter.writeComment("Empty serialization stream");
+            } else {
+                contents.forEach(content -> content.writeCode(codeWriter, handleManager, variableNameManager, writerVarName));
+            }
+
+            codeWriter.decreaseIndentation();
+            codeWriter.writeLine("});");
         }
 
         return codeWriter.getCode();
@@ -368,9 +371,13 @@ public class SerialDataCodeGen implements Closeable {
      * Reads the data written by {@link java.io.Externalizable#writeExternal(ObjectOutput)} or by {@code writeObject}.
      */
     private List<ObjectAnnotationContent> readObjectAnnotationData() throws IOException {
+        return readContents(false);
+    }
+
+    private List<ObjectAnnotationContent> readContents(boolean isTopLevel) throws IOException {
         List<ObjectAnnotationContent> data = new ArrayList<>();
         while (true) {
-            byte b = dataIn.readByte();
+            int b = dataIn.read();
             int blockLength;
 
             if (b == TC_BLOCKDATA) {
@@ -382,8 +389,13 @@ public class SerialDataCodeGen implements Closeable {
                 }
             } else if (b == TC_ENDBLOCKDATA) {
                 break;
+            } else if (b == -1) {
+                if (isTopLevel) {
+                    break;
+                }
+                throw new EOFException("Reached end of file while reading object annotation data");
             } else {
-                data.add(new ObjectAnnotationContent.ObjectObjectAnnotationContent(readObject(b)));
+                data.add(new ObjectAnnotationContent.ObjectObjectAnnotationContent(readObject((byte) b)));
                 continue;
             }
 

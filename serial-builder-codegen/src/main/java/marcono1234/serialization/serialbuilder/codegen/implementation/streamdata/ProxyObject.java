@@ -1,21 +1,30 @@
 package marcono1234.serialization.serialbuilder.codegen.implementation.streamdata;
 
 import marcono1234.serialization.serialbuilder.codegen.implementation.HandleManager;
+import marcono1234.serialization.serialbuilder.codegen.implementation.SerialDataCodeGen;
 import marcono1234.serialization.serialbuilder.codegen.implementation.VariableNameManager;
 import marcono1234.serialization.serialbuilder.codegen.implementation.writer.CodeWriter;
 import marcono1234.serialization.serialbuilder.codegen.implementation.writer.LiteralsHelper;
+import marcono1234.serialization.serialbuilder.codegen.implementation.writer.TopLevelCodeWritable;
 
 import java.util.Iterator;
 import java.util.List;
 
-public record ProxyObject(List<String> interfaceNames, WritableStreamObject invocationHandler, boolean usesClassDescHandle, HandleManager.Handle<ProxyObject> ownHandle) implements HandleAssignableObject {
+public record ProxyObject(
+    List<String> interfaceNames,
+    WritableStreamObject invocationHandler,
+    boolean usesClassDescHandle,
+    HandleManager.Handle<ProxyObject> ownHandle
+) implements HandleAssignableObject, TopLevelCodeWritable {
+
     @Override
     public void writeCode(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager) {
         writeData(writer, handleManager, variableNameManager, ".beginProxyObject(", false);
     }
 
-    public void writeTopLevelObject(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager) {
-        writeData(writer, handleManager, variableNameManager, "byte[] serialData = SimpleSerialBuilder.startProxyObject(", true);
+    @Override
+    public void writeTopLevelCode(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager) {
+        writeData(writer, handleManager, variableNameManager, SerialDataCodeGen.GENERATED_SERIAL_DATA_VARIABLE + "SimpleSerialBuilder.startProxyObject(", true);
     }
 
     void writeData(CodeWriter writer, HandleManager handleManager, VariableNameManager variableNameManager, String methodCallString, boolean addTrailingSemicolon) {

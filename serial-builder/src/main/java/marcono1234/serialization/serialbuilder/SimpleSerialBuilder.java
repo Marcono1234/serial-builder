@@ -12,6 +12,7 @@ import marcono1234.serialization.serialbuilder.simplebuilder.implementation.Simp
 
 import java.io.Externalizable;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 /**
  * Provides static entry points for creating Java serialization data. This API is designed for creating serialization
@@ -203,5 +204,23 @@ public class SimpleSerialBuilder {
      */
     public static ProxyBuilderStart startProxyObject(Class<?>... interfaces) {
         return startProxyObject(new Handle(), interfaces);
+    }
+
+    /**
+     * Writes serialization data using an {@link ObjectBuildingDataOutput}. This allows writing top level
+     * block data, writing multiple top level objects and writing top level objects for which no dedicated
+     * builder method is provided by this class.
+     *
+     * <p>This method is mainly intended for the special cases listed above. If only a single object should
+     * be written, the other builder methods of this class (such as {@link #startSerializableObject()}) should
+     * be preferred because their usage is more concise.
+     *
+     * @param writer
+     *      writes the objects and block data content
+     * @return the serialization data
+     */
+    public static byte[] writeSerializationDataWith(ThrowingConsumer<ObjectBuildingDataOutput> writer) {
+        Objects.requireNonNull(writer);
+        return SimpleSerialBuilderImpl.writeSerializationDataWith(writer);
     }
 }
