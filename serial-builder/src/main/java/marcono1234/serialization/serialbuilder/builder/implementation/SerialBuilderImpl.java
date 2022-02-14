@@ -72,6 +72,11 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     private final AtomicInteger nextHandleIndex = new AtomicInteger(0);
 
     /**
+     * Incremented when an object with multiple steps is started, and decremented when the object is finished.
+     */
+    private int nestingDepth = 0;
+
+    /**
      * Queue for actions to perform after that data of an object has been written. Objects push one action which
      * they then later pop again and execute.
      *
@@ -167,6 +172,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     @Override
     public DescriptorHierarchyStart<ArrayElements> beginArray(Handle unassignedHandle) {
         Objects.requireNonNull(unassignedHandle);
+        nestingDepth++;
 
         AtomicBoolean oldMode = new AtomicBoolean();
         run(() -> {
@@ -277,6 +283,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
 
     @Override
     public Object endArray() {
+        nestingDepth--;
         run(pendingPostObjectActions.removeLast());
 
         // Remove the dummy count for the array itself (not its elements)
@@ -291,6 +298,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     @Override
     public DescriptorHierarchyStart<EnumStart<?>> beginEnum(Handle unassignedHandle) {
         Objects.requireNonNull(unassignedHandle);
+        nestingDepth++;
 
         AtomicBoolean oldMode = new AtomicBoolean();
         run(() -> {
@@ -317,6 +325,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
 
     @Override
     public Object endEnum() {
+        nestingDepth--;
         run(pendingPostObjectActions.removeLast());
         return this;
     }
@@ -324,6 +333,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     @Override
     public DescriptorHierarchyStart beginClass(Handle unassignedHandle) {
         Objects.requireNonNull(unassignedHandle);
+        nestingDepth++;
 
         AtomicBoolean oldMode = new AtomicBoolean();
         run(() -> {
@@ -338,6 +348,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
 
     @Override
     public Object endClass() {
+        nestingDepth--;
         run(pendingPostObjectActions.removeLast());
         return this;
     }
@@ -356,6 +367,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     @Override
     public DescriptorHierarchyStart<SerializableObjectStart<?>> beginSerializableObject(Handle unassignedHandle) {
         Objects.requireNonNull(unassignedHandle);
+        nestingDepth++;
 
         AtomicBoolean oldMode = new AtomicBoolean();
         run(() -> {
@@ -385,6 +397,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     @Override
     public DescriptorHierarchyStart<ExternalizableObjectStart<?>> beginExternalizableObject(Handle unassignedHandle) {
         Objects.requireNonNull(unassignedHandle);
+        nestingDepth++;
 
         AtomicBoolean oldMode = new AtomicBoolean();
         run(() -> {
@@ -402,8 +415,33 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
         return result;
     }
 
-    private ObjectBuildingDataOutput createPendingDataOutput() {
-        return new ObjectBuildingDataOutput() {
+    /**
+     * Index of the current {@link ObjectBuildingDataOutput} scope. The value is increased every time a new
+     * {@code ObjectBuildingDataOutput} is used, and decreased when the scope of the {@code ObjectBuildingDataOutput}
+     * is left. This is used to detect accidental usage of the wrong {@code ObjectBuildingDataOutput} object in case
+     * multiple are in scope (e.g. for nested Externalizable objects).
+     */
+    private int currentOutputScopeIndex = -1;
+
+    private void writeDataWith(ThrowingConsumer<ObjectBuildingDataOutput> writer) {
+        int originalNestingDepth = nestingDepth;
+        int outputScopeIndex = ++currentOutputScopeIndex;
+
+        ObjectBuildingDataOutput dataOutput = new ObjectBuildingDataOutput() {
+            private void verifyOutputIsUsable() {
+                if (outputScopeIndex != currentOutputScopeIndex) {
+                    throw new IllegalStateException("Other output is currently active; make sure you called the method on the correct ObjectBuildingDataOutput variable");
+                }
+                if (nestingDepth != originalNestingDepth) {
+                    throw new IllegalStateException("Previous builder call is incomplete; make sure all builder methods are called until the return type is Void");
+                }
+            }
+
+            private void run(Runnable r) {
+                verifyOutputIsUsable();
+                SerialBuilderImpl.this.run(r);
+            }
+
             @Override
             public void write(int b) {
                 run(() -> out.write(b));
@@ -487,18 +525,21 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
 
             @Override
             public Void objectHandle(Handle handle) {
+                verifyOutputIsUsable();
                 SerialBuilderImpl.this.objectHandle(handle);
                 return null;
             }
 
             @Override
             public Void nullObject() {
+                verifyOutputIsUsable();
                 SerialBuilderImpl.this.nullObject();
                 return null;
             }
 
             @Override
             public Void string(Handle unassignedHandle, String s) {
+                verifyOutputIsUsable();
                 SerialBuilderImpl.this.string(unassignedHandle, s);
                 return null;
             }
@@ -506,11 +547,13 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
             @SuppressWarnings("unchecked")
             @Override
             public DescriptorHierarchyStart<ArrayElements<Void>> beginArray(Handle unassignedHandle) {
+                verifyOutputIsUsable();
                 return (DescriptorHierarchyStart<ArrayElements<Void>>) (DescriptorHierarchyStart<?>) SerialBuilderImpl.this.beginArray(unassignedHandle);
             }
 
             @Override
             public Void array(Handle unassignedHandle, Function<DescriptorHierarchyStart<ArrayElements<Enclosing>>, Enclosing> writer) {
+                verifyOutputIsUsable();
                 SerialBuilderImpl.this.array(unassignedHandle, writer);
                 return null;
             }
@@ -518,23 +561,27 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
             @SuppressWarnings("unchecked")
             @Override
             public DescriptorHierarchyStart<EnumStart<Void>> beginEnum(Handle unassignedHandle) {
+                verifyOutputIsUsable();
                 return (DescriptorHierarchyStart<EnumStart<Void>>) (DescriptorHierarchyStart<?>) SerialBuilderImpl.this.beginEnum(unassignedHandle);
             }
 
             @SuppressWarnings("unchecked")
             @Override
             public DescriptorHierarchyStart<ClassEnd<Void>> beginClass(Handle unassignedHandle) {
+                verifyOutputIsUsable();
                 return SerialBuilderImpl.this.beginClass(unassignedHandle);
             }
 
             @SuppressWarnings("unchecked")
             @Override
             public DescriptorHierarchyStart<SerializableObjectStart<Void>> beginSerializableObject(Handle unassignedHandle) {
+                verifyOutputIsUsable();
                 return (DescriptorHierarchyStart<SerializableObjectStart<Void>>) (DescriptorHierarchyStart<?>) SerialBuilderImpl.this.beginSerializableObject(unassignedHandle);
             }
 
             @Override
             public Void serializableObject(Handle unassignedHandle, Function<DescriptorHierarchyStart<SerializableObjectStart<Enclosing>>, Enclosing> writer) {
+                verifyOutputIsUsable();
                 SerialBuilderImpl.this.serializableObject(unassignedHandle, writer);
                 return null;
             }
@@ -542,15 +589,27 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
             @SuppressWarnings("unchecked")
             @Override
             public DescriptorHierarchyStart<ExternalizableObjectStart<Void>> beginExternalizableObject(Handle unassignedHandle) {
+                verifyOutputIsUsable();
                 return (DescriptorHierarchyStart<ExternalizableObjectStart<Void>>) (DescriptorHierarchyStart<?>) SerialBuilderImpl.this.beginExternalizableObject(unassignedHandle);
             }
 
             @Override
             public Void externalizableObject(Handle unassignedHandle, Function<DescriptorHierarchyStart<ExternalizableObjectStart<Enclosing>>, Enclosing> writer) {
+                verifyOutputIsUsable();
                 SerialBuilderImpl.this.externalizableObject(unassignedHandle, writer);
                 return null;
             }
         };
+        try {
+            writer.accept(dataOutput);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        if (nestingDepth != originalNestingDepth) {
+            throw new IllegalStateException("Usage of ObjectBuildingDataOutput did not complete builder call; make sure all builder methods are called until the return type is Void");
+        }
+        currentOutputScopeIndex--;
     }
 
     @Override
@@ -560,13 +619,11 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
         if (writeBlockData) {
             run(() -> out.setBlockDataMode(true));
         }
-        try {
-            @SuppressWarnings("unchecked")
-            ThrowingConsumer<ObjectBuildingDataOutput> writerT = writer;
-            writerT.accept(createPendingDataOutput());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+
+        @SuppressWarnings("unchecked")
+        ThrowingConsumer<ObjectBuildingDataOutput> writerT = writer;
+        writeDataWith(writerT);
+
         if (writeBlockData) {
             run(() -> out.setBlockDataMode(false));
             run(() -> out.writeByte(TC_ENDBLOCKDATA));
@@ -684,13 +741,10 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
         hasWrittenSlot.getLast().set(true);
 
         run(() -> out.setBlockDataMode(true));
-        try {
-            @SuppressWarnings("unchecked")
-            ThrowingConsumer<ObjectBuildingDataOutput> writerT = writer;
-            writerT.accept(createPendingDataOutput());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+
+        @SuppressWarnings("unchecked")
+        ThrowingConsumer<ObjectBuildingDataOutput> writerT = writer;
+        writeDataWith(writerT);
 
         // Write the fields written with `defaultWriteObject()`, if any
         Queue<Runnable> fieldActions = this.fieldActions.removeLast();
@@ -728,6 +782,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
 
     @Override
     public Object endObject() {
+        nestingDepth--;
         run(pendingPostObjectActions.removeLast());
 
         AtomicInteger dummyElementCount = objectArrayElementCounts.removeLast();
@@ -737,9 +792,12 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
         }
 
         // Check if top-level object was finished
-        if (pendingPostObjectActions.isEmpty()) {
+        if (nestingDepth == 0) {
             if (!objectArrayElementCounts.isEmpty()) {
                 throw new AssertionError("Unprocessed element counts: " + objectArrayElementCounts);
+            }
+            if (!pendingPostObjectActions.isEmpty()) {
+                throw new AssertionError("Unprocessed post object actions: " + pendingObjectsActions.size());
             }
 
             if (isBuildingSingleObject) {
@@ -790,11 +848,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
     public static byte[] writeSerializationDataWith(ThrowingConsumer<ObjectBuildingDataOutput> writer) {
         SerialBuilderImpl serialBuilder = new SerialBuilderImpl(false);
         serialBuilder.out.setBlockDataMode(true);
-        try {
-            writer.accept(serialBuilder.createPendingDataOutput());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        serialBuilder.writeDataWith(writer);
         serialBuilder.out.setBlockDataMode(false);
         return serialBuilder.getSerialData();
     }

@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -272,6 +273,65 @@ class SimpleSerialBuilderTest {
         assertEquals(2, actualObject.i);
         assertEquals("test", actualObject.s);
         assertEquals(4, actualObject.extra);
+    }
+
+    @Test
+    void writeObject_WrongOutputUsage() {
+        //noinspection CodeBlock2Expr
+        var e = assertThrows(IllegalStateException.class, () -> {
+            //noinspection CodeBlock2Expr
+            SimpleSerialBuilder.startSerializableObject()
+                .beginClassData(ClassWithWriteObject.class)
+                    .writeObjectWith(outerWriter -> {
+                        outerWriter.beginSerializableObject()
+                            .beginClassData(ClassWithWriteObject.class)
+                                .writeObjectWith(innerWriter -> {
+                                    // Erroneously uses outer writer
+                                    outerWriter.writeInt(1);
+                                })
+                            .endClassData()
+                        .endObject();
+                    })
+                .endClassData()
+            .endObject();
+        });
+        assertEquals("Other output is currently active; make sure you called the method on the correct ObjectBuildingDataOutput variable", e.getMessage());
+    }
+
+    @Test
+    void writeObject_IncompleteBuilderUsage_TrailingMissingCall() {
+        //noinspection CodeBlock2Expr
+        var e = assertThrows(IllegalStateException.class, () -> {
+            SimpleSerialBuilder.startSerializableObject()
+                .beginClassData(ClassWithWriteObject.class)
+                    .writeObjectWith(writer -> {
+                        writer.beginObjectArray(Object[].class)
+                            .string("test");
+                        // Missing endArray() call
+                    })
+                .endClassData()
+            .endObject();
+        });
+        assertEquals("Usage of ObjectBuildingDataOutput did not complete builder call; make sure all builder methods are called until the return type is Void", e.getMessage());
+    }
+
+    @Test
+    void writeObject_WrongOutputUsage_MissingCallBeforeNextCall() {
+        //noinspection CodeBlock2Expr
+        var e = assertThrows(IllegalStateException.class, () -> {
+            SimpleSerialBuilder.startSerializableObject()
+                .beginClassData(ClassWithWriteObject.class)
+                    .writeObjectWith(writer -> {
+                        writer.beginObjectArray(Object[].class)
+                            .string("test");
+                        // Missing endArray() call
+
+                        writer.writeInt(1);
+                    })
+                .endClassData()
+            .endObject();
+        });
+        assertEquals("Previous builder call is incomplete; make sure all builder methods are called until the return type is Void", e.getMessage());
     }
 
     private static class ClassWithWriteObjectWritingPrimitiveArray implements Serializable {

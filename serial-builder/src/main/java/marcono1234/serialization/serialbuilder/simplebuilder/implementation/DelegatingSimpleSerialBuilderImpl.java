@@ -39,6 +39,25 @@ import static java.io.ObjectStreamConstants.SC_WRITE_METHOD;
 public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, ObjectArrayElements, SerializableObjectStart, SerializableObjectWithDataStart, SerializableObjectData, SerializableObjectObjectFieldEnd, ProxyObjectStart, ProxyObjectEnd, Enclosing {
     private final marcono1234.serialization.serialbuilder.builder.api.object.ObjectStart<C> delegateBuilder;
 
+    /*
+     * Implementation note:
+     * These checks for correct ObjectBuildingDataOutput usage are done here for the simple builder as well because
+     * the checks in the underlying non-simple builder might not catch every incorrect usage because some simple
+     * build calls only have an effect when the builder call chain is completed.
+     *
+     * The implementation here differs from the one in the non-simple builder because here for ObjectBuildingDataOutput
+     * a new DelegatingSimpleSerialBuilderImpl is created every time.
+     */
+    /**
+     * Incremented when an object with multiple steps is started, and decremented when the object is finished.
+     */
+    private int nestingDepth = 0;
+    /**
+     * Whether this builder is in the current active scope. This is used to detect erroneous usage of the wrong
+     * {@link ObjectBuildingDataOutput} object in case multiple are in scope (e.g. for nested Externalizable objects).
+     */
+    private boolean isActiveScope = true;
+
     public DelegatingSimpleSerialBuilderImpl(marcono1234.serialization.serialbuilder.builder.api.object.ObjectStart<C> delegateBuilder) {
         this.delegateBuilder = delegateBuilder;
     }
@@ -188,6 +207,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     
     @Override
     public ObjectArrayElements beginObjectArray(Handle unassignedHandle, String arrayType) {
+        nestingDepth++;
         pendingArrayData.addLast(new ArrayData(unassignedHandle, arrayType));
         pendingObjectActions.addLast(new LinkedList<>());
         return this;
@@ -195,6 +215,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
 
     @Override
     public Object endArray() {
+        nestingDepth--;
         ArrayData arrayData = pendingArrayData.removeLast();
         Deque<ObjectWriterAction> elementActions = pendingObjectActions.removeLast();
         C result = run(start -> {
@@ -205,7 +226,10 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
             return current.endElements().endArray();
         });
 
-        if (pendingObjectActions.isEmpty()) {
+        if (nestingDepth == 0) {
+            if (!pendingObjectActions.isEmpty()) {
+                throw new AssertionError("Pending object actions: " + pendingObjectActions.size());
+            }
             return result;
         } else {
             return this;
@@ -342,6 +366,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
 
     @Override
     public SerializableObjectStart beginSerializableObject(Handle unassignedHandle) {
+        nestingDepth++;
         currentSerializableObjectHandle.addLast(verifyUnassigned(unassignedHandle));
         pendingObjectActions.addLast(new LinkedList<>());
         currentSerializableClassDataList.addLast(new LinkedList<>());
@@ -442,86 +467,112 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
      * Once a non-simple {@code ObjectBuildingDataOutput} is passed to the returned {@code ThrowingConsumer}, it creates
      * a simple {@code ObjectBuildingDataOutput} based on it which is then itself passed to the provided {@code writer}.
      *
+     * @param enclosing
+     *      the enclosing builder for which the data output is created; may be {@code null}
      * @param writer
      *      writing to a simple {@code ObjectBuildingDataOutput}
      * @return
      *      consumer of a non-simple {@code ObjectBuildingDataOutput}, which, when called, passes a simple
      *      {@code ObjectBuildingDataOutput} to the {@code writer}
      */
-    protected static ThrowingConsumer<marcono1234.serialization.serialbuilder.builder.api.ObjectBuildingDataOutput> createDataOutputConsumer(ThrowingConsumer<ObjectBuildingDataOutput> writer) {
+    protected static ThrowingConsumer<marcono1234.serialization.serialbuilder.builder.api.ObjectBuildingDataOutput> createDataOutputConsumer(DelegatingSimpleSerialBuilderImpl<?> enclosing, ThrowingConsumer<ObjectBuildingDataOutput> writer) {
         Objects.requireNonNull(writer);
+
         return nonSimpleWriter -> {
-            @SuppressWarnings("unchecked")
-            ObjectStart<Void> delegateObjectBuilder = new DelegatingSimpleSerialBuilderImpl<>(nonSimpleWriter);
-            writer.accept(new ObjectBuildingDataOutput() {
+            DelegatingSimpleSerialBuilderImpl<Void> delegateObjectBuilder = new DelegatingSimpleSerialBuilderImpl<>(nonSimpleWriter);
+            int originalNestingDepth = delegateObjectBuilder.nestingDepth;
+            ObjectBuildingDataOutput dataOutput = new ObjectBuildingDataOutput() {
+                private void verifyOutputIsUsable() {
+                    if (!delegateObjectBuilder.isActiveScope) {
+                        throw new IllegalStateException("Other output is currently active; make sure you called the method on the correct ObjectBuildingDataOutput variable");
+                    }
+                    if (delegateObjectBuilder.nestingDepth != originalNestingDepth) {
+                        throw new IllegalStateException("Previous builder call is incomplete; make sure all builder methods are called until the return type is Void");
+                    }
+                }
+
                 @Override
                 public void write(int b) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.write(b);
                 }
 
                 @Override
                 public void write(byte[] b) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.write(b);
                 }
 
                 @Override
                 public void write(byte[] b, int off, int len) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.write(b, off, len);
                 }
 
                 @Override
                 public void writeBoolean(boolean v) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.writeBoolean(v);
                 }
 
                 @Override
                 public void writeByte(int v) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.writeByte(v);
                 }
 
                 @Override
                 public void writeShort(int v) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.writeShort(v);
                 }
 
                 @Override
                 public void writeChar(int v) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.writeChar(v);
                 }
 
                 @Override
                 public void writeInt(int v) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.writeInt(v);
                 }
 
                 @Override
                 public void writeLong(long v) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.writeLong(v);
                 }
 
                 @Override
                 public void writeFloat(float v) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.writeFloat(v);
                 }
 
                 @Override
                 public void writeDouble(double v) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.writeDouble(v);
                 }
 
                 @Deprecated
                 @Override
                 public void writeBytes(String s) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.writeBytes(s);
                 }
 
                 @Override
                 public void writeChars(String s) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.writeChars(s);
                 }
 
                 @Override
                 public void writeUTF(String s) throws IOException {
+                    verifyOutputIsUsable();
                     nonSimpleWriter.writeUTF(s);
                 }
 
@@ -529,139 +580,180 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
 
                 @Override
                 public Void objectHandle(Handle handle) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.objectHandle(handle);
                     return null;
                 }
 
                 @Override
                 public Void nullObject() {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.nullObject();
                     return null;
                 }
 
                 @Override
                 public Void string(String s) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.string(s);
                     return null;
                 }
 
                 @Override
                 public Void array(Handle unassignedHandle, boolean[] array) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
                 public Void array(Handle unassignedHandle, byte[] array) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
                 public Void array(Handle unassignedHandle, char[] array) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
                 public Void array(Handle unassignedHandle, short[] array) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
                 public Void array(Handle unassignedHandle, int[] array) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
                 public Void array(Handle unassignedHandle, long[] array) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
                 public Void array(Handle unassignedHandle, float[] array) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
                 @Override
                 public Void array(Handle unassignedHandle, double[] array) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.array(unassignedHandle, array);
                     return null;
                 }
 
+                @SuppressWarnings("unchecked")
                 @Override
                 public ObjectArrayElements<Void> beginObjectArray(Handle unassignedHandle, String arrayType) {
+                    verifyOutputIsUsable();
                     return delegateObjectBuilder.beginObjectArray(unassignedHandle, arrayType);
                 }
 
                 @Override
                 public Void objectArray(Handle unassignedHandle, String arrayType, Function<ObjectArrayElements<Enclosing>, Enclosing> writer) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.objectArray(unassignedHandle, arrayType, writer);
                     return null;
                 }
 
                 @Override
                 public Void enumConstant(String enumClass, String constantName) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.enumConstant(enumClass, constantName);
                     return null;
                 }
 
                 @Override
                 public Void nonSerializableClass(String className) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.nonSerializableClass(className);
                     return null;
                 }
 
                 @Override
                 public Void externalizableClass(String className, long serialVersionUID) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.externalizableClass(className, serialVersionUID);
                     return null;
                 }
 
                 @Override
                 public Void serializableClass(String className, long serialVersionUID) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.serializableClass(className, serialVersionUID);
                     return null;
                 }
 
                 @Override
                 public Void enumClass(String className) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.enumClass(className);
                     return null;
                 }
 
                 @Override
                 public Void proxyClass(String... interfaceNames) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.proxyClass(interfaceNames);
                     return null;
                 }
 
+                @SuppressWarnings("unchecked")
                 @Override
                 public SerializableObjectStart<Void> beginSerializableObject(Handle unassignedHandle) {
+                    verifyOutputIsUsable();
                     return delegateObjectBuilder.beginSerializableObject(unassignedHandle);
                 }
 
                 @Override
                 public Void externalizableObject(Handle unassignedHandle, String typeName, long serialVersionUID, ThrowingConsumer<ObjectBuildingDataOutput> writer) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.externalizableObject(unassignedHandle, typeName, serialVersionUID, writer);
                     return null;
                 }
 
+                @SuppressWarnings("unchecked")
                 @Override
                 public ProxyObjectStart<ProxyObjectEnd<Void>> beginProxyObject(Handle unassignedHandle, String... interfaceNames) {
+                    verifyOutputIsUsable();
                     return delegateObjectBuilder.beginProxyObject(unassignedHandle, interfaceNames);
                 }
 
                 @Override
                 public Void proxyObject(Handle unassignedHandle, String[] interfaceNames, Function<ProxyObjectStart<Enclosing>, Enclosing> writer) {
+                    verifyOutputIsUsable();
                     delegateObjectBuilder.proxyObject(unassignedHandle, interfaceNames, writer);
                     return null;
                 }
-            });
+            };
+
+            // Mark the enclosing builder as not active
+            if (enclosing != null) {
+                enclosing.isActiveScope = false;
+            }
+
+            writer.accept(dataOutput);
+            if (delegateObjectBuilder.nestingDepth != originalNestingDepth) {
+                throw new IllegalStateException("Usage of ObjectBuildingDataOutput did not complete builder call; make sure all builder methods are called until the return type is Void");
+            }
+
+            // Mark the enclosing builder as active again
+            if (enclosing != null) {
+                enclosing.isActiveScope = true;
+            }
         };
     }
     
@@ -679,6 +771,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
 
     @Override
     public Object endObject() {
+        nestingDepth--;
         var remainingActions = pendingObjectActions.removeLast();
         if (!remainingActions.isEmpty()) {
             throw new IllegalStateException("Unexpected remaining object actions: " + remainingActions);
@@ -732,7 +825,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
                 @SuppressWarnings("unchecked")
                 ThrowingConsumer<ObjectBuildingDataOutput> writeObjectWriter = classData.writeObjectWriter.get();
                 if (writeObjectWriter != null) {
-                    slotEnd = afterObjectFields.writeObjectWith(createDataOutputConsumer(writeObjectWriter));
+                    slotEnd = afterObjectFields.writeObjectWith(createDataOutputConsumer(this, writeObjectWriter));
                 }
 
                 slotsStart = slotEnd.endSlot();
@@ -741,7 +834,10 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
             return slotsStart.endSlots().endObject();
         });
 
-        if (pendingObjectActions.isEmpty()) {
+        if (nestingDepth == 0) {
+            if (!pendingObjectActions.isEmpty()) {
+                throw new AssertionError("Pending object actions: " + pendingObjectActions.size());
+            }
             return result;
         } else {
             return this;
@@ -765,11 +861,14 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
                         .flags(SC_EXTERNALIZABLE | SC_BLOCK_DATA)
                     .endDescriptor()
                 .endDescriptorHierarchy()
-                .writeExternalWith(createDataOutputConsumer(writerT))
+                .writeExternalWith(createDataOutputConsumer(this, writerT))
             .endObject();
         });
 
-        if (pendingObjectActions.isEmpty()) {
+        if (nestingDepth == 0) {
+            if (!pendingObjectActions.isEmpty()) {
+                throw new AssertionError("Pending object actions: " + pendingObjectActions.size());
+            }
             return result;
         } else {
             return this;
@@ -816,6 +915,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     
     @Override
     public ProxyObjectStart beginProxyObject(Handle unassignedHandle, String... interfaceNames) {
+        nestingDepth++;
         currentProxyData.addLast(new ProxyData(unassignedHandle, interfaceNames.clone()));
         // Add new object actions nesting level for invocation handler object
         pendingObjectActions.addLast(new LinkedList<>());
@@ -846,12 +946,16 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
 
     @Override
     public Object endProxyObject() {
+        nestingDepth--;
         Deque<ObjectWriterAction> invocationHandlerActions = pendingObjectActions.removeLast();
         if (invocationHandlerActions.size() != 1) {
             throw new IllegalStateException("Expected one invocation handler action, but got: " + invocationHandlerActions);
         }
         C result = proxyObject(invocationHandlerActions.getFirst());
-        if (pendingObjectActions.isEmpty()) {
+        if (nestingDepth == 0) {
+            if (!pendingObjectActions.isEmpty()) {
+                throw new AssertionError("Pending object actions: " + pendingObjectActions.size());
+            }
             return result;
         } else {
             return this;

@@ -30,7 +30,9 @@ import static java.io.ObjectStreamConstants.SC_EXTERNALIZABLE;
 import static java.io.ObjectStreamConstants.SC_SERIALIZABLE;
 import static java.io.ObjectStreamConstants.SC_WRITE_METHOD;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class SerialBuilderTest {
@@ -843,6 +845,114 @@ class SerialBuilderTest {
 
         byte[] expectedData = serialize(new ClassWithWriteObjectWritingPrimitiveArray(primitiveData));
         assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void writeObject_WrongOutputUsage() {
+        //noinspection CodeBlock2Expr
+        var e = assertThrows(IllegalStateException.class, () -> {
+            //noinspection CodeBlock2Expr
+            SerialBuilder.startSerializableObject()
+                .beginDescriptorHierarchy()
+                    .beginDescriptor()
+                        .typeWithUid(ClassWithWriteObject.class)
+                        .flags(SC_SERIALIZABLE | SC_WRITE_METHOD)
+                    .endDescriptor()
+                .endDescriptorHierarchy()
+                .beginSlots()
+                    .beginSlot()
+                        .writeObjectWith(outerWriter -> {
+                            outerWriter.beginSerializableObject()
+                                .beginDescriptorHierarchy()
+                                    .beginDescriptor()
+                                        .typeWithUid(ClassWithWriteObject.class)
+                                        .flags(SC_SERIALIZABLE | SC_WRITE_METHOD)
+                                    .endDescriptor()
+                                .endDescriptorHierarchy()
+                                .beginSlots()
+                                    .beginSlot()
+                                        .writeObjectWith(innerWriter -> {
+                                            // Erroneously uses outer writer
+                                            outerWriter.writeInt(1);
+                                        })
+                                    .endSlot()
+                                .endSlots()
+                            .endObject();
+                        })
+                    .endSlot()
+                .endSlots()
+            .endObject();
+        });
+        assertEquals("Other output is currently active; make sure you called the method on the correct ObjectBuildingDataOutput variable", e.getMessage());
+    }
+
+    @Test
+    void writeObject_IncompleteBuilderUsage_TrailingMissingCall() {
+        var start = SerialBuilder.startSerializableObject()
+            .beginDescriptorHierarchy()
+                .beginDescriptor()
+                    .typeWithUid(ClassWithWriteObject.class)
+                    .flags(SC_SERIALIZABLE | SC_WRITE_METHOD)
+                .endDescriptor()
+            .endDescriptorHierarchy()
+            .beginSlots()
+                .beginSlot();
+
+
+        //noinspection CodeBlock2Expr
+        var e = assertThrows(IllegalStateException.class, () -> {
+            start.writeObjectWith(writer -> {
+                writer.beginEnum()
+                    .beginDescriptorHierarchy()
+                        .beginDescriptor()
+                            .enumClass(TestEnum.class)
+                            .flags(SC_SERIALIZABLE | SC_ENUM)
+                        .endDescriptor()
+                        .beginDescriptor()
+                            .enumClass(Enum.class)
+                            .flags(SC_SERIALIZABLE | SC_ENUM)
+                        .endDescriptor()
+                    .endDescriptorHierarchy()
+                    .name("TEST");
+                // Missing endEnum() call
+            });
+        });
+        assertEquals("Usage of ObjectBuildingDataOutput did not complete builder call; make sure all builder methods are called until the return type is Void", e.getMessage());
+    }
+
+    @Test
+    void writeObject_IncompleteBuilderUsage_MissingCallBeforeNextCall() {
+        var start = SerialBuilder.startSerializableObject()
+            .beginDescriptorHierarchy()
+                .beginDescriptor()
+                    .typeWithUid(ClassWithWriteObject.class)
+                    .flags(SC_SERIALIZABLE | SC_WRITE_METHOD)
+                .endDescriptor()
+            .endDescriptorHierarchy()
+            .beginSlots()
+                .beginSlot();
+
+        //noinspection CodeBlock2Expr
+        var e = assertThrows(IllegalStateException.class, () -> {
+            start.writeObjectWith(writer -> {
+                writer.beginEnum()
+                    .beginDescriptorHierarchy()
+                        .beginDescriptor()
+                            .enumClass(TestEnum.class)
+                            .flags(SC_SERIALIZABLE | SC_ENUM)
+                        .endDescriptor()
+                        .beginDescriptor()
+                            .enumClass(Enum.class)
+                            .flags(SC_SERIALIZABLE | SC_ENUM)
+                        .endDescriptor()
+                    .endDescriptorHierarchy()
+                    .name("TEST");
+                // Missing endEnum() call
+
+                writer.writeInt(1);
+            });
+        });
+        assertEquals("Previous builder call is incomplete; make sure all builder methods are called until the return type is Void", e.getMessage());
     }
 
     private static class SerializableInvocationHandler implements InvocationHandler, Serializable {
