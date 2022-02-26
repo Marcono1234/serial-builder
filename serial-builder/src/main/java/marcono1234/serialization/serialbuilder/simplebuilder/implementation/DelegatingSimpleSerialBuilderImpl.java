@@ -719,6 +719,13 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
                 }
 
                 @Override
+                public Void serializableObject(Handle unassignedHandle, Function writer) {
+                    verifyOutputIsUsable();
+                    delegateObjectBuilder.serializableObject(unassignedHandle, writer);
+                    return null;
+                }
+
+                @Override
                 public Void externalizableObject(Handle unassignedHandle, String typeName, long serialVersionUID, ThrowingConsumer<ObjectBuildingDataOutput> writer) {
                     verifyOutputIsUsable();
                     delegateObjectBuilder.externalizableObject(unassignedHandle, typeName, serialVersionUID, writer);
@@ -842,6 +849,16 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
         } else {
             return this;
         }
+    }
+
+    @Override
+    public Object serializableObject(Handle unassignedHandle, Function writer) {
+        @SuppressWarnings("unchecked")
+        var returnedBuilder = writer.apply(beginSerializableObject(unassignedHandle));
+        if (returnedBuilder != this) {
+            throw new IllegalStateException("Incorrect builder usage");
+        }
+        return this;
     }
 
     @Override

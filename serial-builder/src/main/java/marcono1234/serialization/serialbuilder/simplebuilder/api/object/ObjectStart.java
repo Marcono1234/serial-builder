@@ -519,6 +519,45 @@ public interface ObjectStart<C> {
     }
 
     /**
+     * Writes a new object implementing {@link Serializable} and assigns a handle to it. Allows using a separate method
+     * for creating the object data without having to interrupt the builder call chain. The writer function must call
+     * all builder methods and return the result of the last builder method to make sure the data is written correctly.
+     *
+     * @param unassignedHandle
+     *      handle which should be assigned a reference to the written object
+     * @param writer
+     *      for writing the object data
+     * @return <i>next step</i>
+     */
+    /*
+     * Note: Unlike the other methods with `Function<..., Enclosing>`, SerializableObjectStart is only a list of class
+     * data, therefore `endObject()` call at the end returning Enclosing is required, even though it makes the call
+     * chain unbalanced, but that is probably acceptable. E.g.:
+     * serializableObject(writer -> {
+     *     return writer
+     *         .beginClassData(...)
+     *         .endClassData()
+     *         .beginClassData(...)
+     *         .endClassData()
+     *     .endObject();
+     * });
+     */
+    C serializableObject(Handle unassignedHandle, Function<SerializableObjectStart<Enclosing>, Enclosing> writer);
+
+    /**
+     * Writes a new object implementing {@link Serializable}. Allows using a separate method
+     * for creating the object data without having to interrupt the builder call chain. The writer function must call
+     * all builder methods and return the result of the last builder method to make sure the data is written correctly.
+     *
+     * @param writer
+     *      for writing the object data
+     * @return <i>next step</i>
+     */
+    default C serializableObject(Function<SerializableObjectStart<Enclosing>, Enclosing> writer) {
+        return serializableObject(new Handle(), writer);
+    }
+
+    /**
      * Writes an object implementing {@link Externalizable} and assigns a handle to it.
      *
      * @param unassignedHandle

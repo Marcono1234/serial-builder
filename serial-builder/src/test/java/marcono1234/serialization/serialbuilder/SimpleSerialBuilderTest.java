@@ -5,6 +5,7 @@ import marcono1234.serialization.serialbuilder.builder.api.Handle;
 import marcono1234.serialization.serialbuilder.simplebuilder.api.object.ObjectStart;
 import marcono1234.serialization.serialbuilder.simplebuilder.api.object.array.ObjectArrayElements;
 import marcono1234.serialization.serialbuilder.simplebuilder.api.object.proxy.ProxyObjectStart;
+import marcono1234.serialization.serialbuilder.simplebuilder.api.object.serializable.SerializableObjectStart;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -670,6 +671,20 @@ class SimpleSerialBuilderTest {
         public Object[] array;
     }
 
+    private static Enclosing writeSerializableObject(SerializableObjectStart<Enclosing> start) {
+        return start
+            .beginClassData(SerializableClass.class)
+                .primitiveIntField("i", 6)
+                .beginObjectField("array", int[].class)
+                    .array(new int[] {1, 2, 3})
+                .endField()
+                .beginObjectField("s", String.class)
+                    .string("nested-test")
+                .endField()
+            .endClassData()
+        .endObject();
+    }
+
     private static class SimpleInvocationHandler implements InvocationHandler, Serializable {
         @Serial
         private static final long serialVersionUID = 1L;
@@ -692,6 +707,7 @@ class SimpleSerialBuilderTest {
     private static Enclosing writeObjectArrayElements(ObjectArrayElements<Enclosing> start) {
         return start
             .string("test")
+            .serializableObject(SimpleSerialBuilderTest::writeSerializableObject)
             .proxyObject(new Class[]{Runnable.class}, SimpleSerialBuilderTest::writeInvocationHandler)
         .endArray();
     }
@@ -710,10 +726,15 @@ class SimpleSerialBuilderTest {
 
         ClassWithObjectArray actualObject = deserialize(actualData);
         Object[] actualArray = actualObject.array;
-        assertEquals(2, actualArray.length);
+        assertEquals(3, actualArray.length);
         assertEquals("test", actualArray[0]);
 
-        Object actualProxy = actualArray[1];
+        SerializableClass actualSerializableObject = (SerializableClass) actualArray[1];
+        assertEquals(6, actualSerializableObject.i);
+        assertArrayEquals(new int[] {1, 2, 3}, actualSerializableObject.array);
+        assertEquals("nested-test", actualSerializableObject.s);
+
+        Object actualProxy = actualArray[2];
         assertTrue(Proxy.isProxyClass(actualProxy.getClass()));
         Object actualInvocationHandler = Proxy.getInvocationHandler(actualProxy);
         assertEquals(SimpleInvocationHandler.class, actualInvocationHandler.getClass());
