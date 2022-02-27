@@ -100,7 +100,7 @@ public class SimpleSerialBuilderCodeGen {
      * is {@code false}).
      *
      * @param serializableClass
-     *      Serializiable class for which the code should be generated
+     *      Serializable class for which the code should be generated
      * @param generateTopLevel
      *      Whether to generate top level {@code SimpleSerialBuilder} method calls
      * @return
@@ -109,6 +109,8 @@ public class SimpleSerialBuilderCodeGen {
      *      If code generation fails because the class does not implement {@code Serializable}, or because the class
      *      is not supported
      */
+    // Note: Don't use Class<? extends Serializable> as parameter type to make method easier to use,
+    // especially when class comes from Class.forName or similar
     public static String generateCodeForClass(Class<?> serializableClass, boolean generateTopLevel) throws CodeGenException {
         return ClassCodeGen.generateCode(serializableClass, generateTopLevel);
     }

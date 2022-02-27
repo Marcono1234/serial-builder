@@ -1,0 +1,6 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$AbstractSerializableClass", 1L)
+        .primitiveShortField("s", /* value */)
+    .endClassData()
+    // Warning: Class is abstract; must add class data of non-abstract subclass
+.endObject();

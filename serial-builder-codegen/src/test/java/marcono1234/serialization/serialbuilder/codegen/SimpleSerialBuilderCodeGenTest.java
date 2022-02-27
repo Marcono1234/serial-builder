@@ -402,6 +402,28 @@ class SimpleSerialBuilderCodeGenTest {
         private float f;
     }
 
+    @SuppressWarnings("unused")
+    private static class SubclassOverridingWriteReplace extends SerializableClassWithWriteReplace {
+        @Serial
+        private static final long serialVersionUID = 2L;
+
+        private byte b;
+
+        @Serial
+        @Override
+        Object writeReplace() {
+            return "overridden";
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static abstract class AbstractSerializableClass implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        private short s;
+    }
+
     private static class ExternalizableClass implements Externalizable {
         @Serial
         private static final long serialVersionUID = 1L;
@@ -448,6 +470,8 @@ class SimpleSerialBuilderCodeGenTest {
         SerializableClassWithWriteObject.class,
         SerializableClassWithWriteReplace.class,
         SerializableSubclass.class,
+        SubclassOverridingWriteReplace.class,
+        AbstractSerializableClass.class,
         ExternalizableClass.class,
         RecordClass.class,
         String.class,
@@ -469,6 +493,8 @@ class SimpleSerialBuilderCodeGenTest {
         SerializableClassWithWriteObject.class,
         SerializableClassWithWriteReplace.class,
         SerializableSubclass.class,
+        SubclassOverridingWriteReplace.class,
+        AbstractSerializableClass.class,
         ExternalizableClass.class,
         RecordClass.class,
     }, classesProviderMethod = "dynamicTopLevelClasses")
@@ -513,6 +539,42 @@ class SimpleSerialBuilderCodeGenTest {
         assertEquals(expectedMessage, e.getMessage());
 
         e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(NonSerializableClass.class, true));
+        assertEquals(expectedMessage, e.getMessage());
+    }
+
+    private interface InterfaceExtendingSerializable extends Serializable {
+    }
+    private interface InterfaceExtendingExternalizable extends Externalizable {
+    }
+
+    @ParameterizedTest
+    @ValueSource(classes = {
+        Serializable.class,
+        InterfaceExtendingSerializable.class,
+        Externalizable.class,
+        InterfaceExtendingExternalizable.class,
+    })
+    void generateCodeForClass_Interface(Class<?> c) {
+        String expectedMessage = "Code generation for interface (" + c.getTypeName() + ") is not supported";
+
+        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(c, false));
+        assertEquals(expectedMessage, e.getMessage());
+
+        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(c, true));
+        assertEquals(expectedMessage, e.getMessage());
+    }
+
+    private abstract static class AbstractExternalizable implements Externalizable {
+    }
+
+    @Test
+    void generateCodeForClass_AbstractExternalizable() {
+        String expectedMessage = "Code generation for abstract Externalizable (" + AbstractExternalizable.class.getTypeName() + ") is not supported";
+
+        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(AbstractExternalizable.class, false));
+        assertEquals(expectedMessage, e.getMessage());
+
+        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(AbstractExternalizable.class, true));
         assertEquals(expectedMessage, e.getMessage());
     }
 }

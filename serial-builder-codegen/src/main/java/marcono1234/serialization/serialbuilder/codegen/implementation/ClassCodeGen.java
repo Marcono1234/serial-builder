@@ -31,6 +31,10 @@ public class ClassCodeGen {
     public static String generateCode(Class<?> c, boolean generateTopLevel) throws CodeGenException {
         Objects.requireNonNull(c);
 
+        if (c.isInterface()) {
+            throw new CodeGenException("Code generation for interface (" + c.getTypeName() + ") is not supported");
+        }
+
         CodeWriter codeWriter = new CodeWriter(true, true);
         if (generateTopLevel) {
             writeTopLevelCode(codeWriter, c);
@@ -78,8 +82,16 @@ public class ClassCodeGen {
         codeWriter.writeLine(".endProxyObject()" + (isTopLevel ? ";" : ""));
     }
 
-    private static void writeExternalizableCode(CodeWriter codeWriter, Class<?> externalizableClass, String firstLinePrefix, boolean isTopLevel) {
-          String firstLine = firstLinePrefix + "(" + createTypeNameLiteral(externalizableClass) + ", " + createSerialVersionUidLiteral(externalizableClass) + ", writer -> {";
+    private static boolean isAbstract(Class<?> c) {
+        return Modifier.isAbstract(c.getModifiers());
+    }
+
+    private static void writeExternalizableCode(CodeWriter codeWriter, Class<?> externalizableClass, String firstLinePrefix, boolean isTopLevel) throws CodeGenException {
+        if (isAbstract(externalizableClass)) {
+            throw new CodeGenException("Code generation for abstract Externalizable (" + externalizableClass.getTypeName() + ") is not supported");
+        }
+
+        String firstLine = firstLinePrefix + "(" + createTypeNameLiteral(externalizableClass) + ", " + createSerialVersionUidLiteral(externalizableClass) + ", writer -> {";
         codeWriter.writeLine(firstLine);
         codeWriter.increaseIndentation();
         writeBlockComment(codeWriter, "... object data");
@@ -161,10 +173,7 @@ public class ClassCodeGen {
 
     private static void writeClassHierarchyData(CodeWriter codeWriter, Class<?> topClass, Set<Class<?>> recursionTracker) throws CodeGenException {
         // Check for declared or inherited writeReplace() method
-        if (hasWriteReplaceMethod(topClass)) {
-            // Write comment because due to writeReplace() class might normally not be serialized itself
-            codeWriter.writeComment("Class has writeReplace() method");
-        }
+        Class<?> classDeclaringWriteReplace = getClassDeclaringWriteReplaceMethod(topClass);
 
         List<Class<?>> classHierarchy = new ArrayList<>();
         Class<?> currentClass = topClass;
@@ -175,6 +184,12 @@ public class ClassCodeGen {
         // Iterate in reverse order
         for (int i = classHierarchy.size() - 1; i >= 0; i--) {
             currentClass = classHierarchy.get(i);
+
+            // Only report the writeReplace() method which takes effect; don't consider overridden ones (if any)
+            if (currentClass == classDeclaringWriteReplace) {
+                // Write comment because due to writeReplace() class might normally not be serialized itself
+                codeWriter.writeComment("Class has writeReplace() method");
+            }
 
             codeWriter.writeLine(".beginClassData(" + createTypeNameLiteral(currentClass) + ", " + createSerialVersionUidLiteral(currentClass) + ")");
             codeWriter.increaseIndentation();
@@ -219,6 +234,11 @@ public class ClassCodeGen {
             codeWriter.decreaseIndentation();
             codeWriter.writeLine(".endClassData()");
         }
+
+        if (isAbstract(topClass)) {
+            // Deserialization of abstract classes is not possible, write a warning
+            codeWriter.writeComment("Warning: Class is abstract; must add class data of non-abstract subclass");
+        }
     }
 
     private static void writeBlockComment(CodeWriter codeWriter, String text) {
@@ -247,11 +267,11 @@ public class ClassCodeGen {
         return Modifier.isPrivate(modifiers) && !Modifier.isStatic(modifiers) && method.getReturnType() == void.class;
     }
 
-    private static boolean hasWriteReplaceMethod(Class<?> c) {
+    private static Class<?> getClassDeclaringWriteReplaceMethod(Class<?> c) {
         Class<?> declaringClass = c;
         Method method = null;
 
-        // Matches implementation of java.io.ObjectStreamClass.getInheritableMethod
+        // Roughly matches implementation of java.io.ObjectStreamClass.getInheritableMethod
         do {
             try {
                 method = declaringClass.getDeclaredMethod("writeReplace");
@@ -262,24 +282,30 @@ public class ClassCodeGen {
         } while (declaringClass != null);
 
         if (method == null) {
-            return false;
+            return null;
         }
 
         int modifiers = method.getModifiers();
-        if (Modifier.isStatic(modifiers) || Modifier.isAbstract(modifiers) || method.getReturnType() != Object.class) {
-            return false;
+        // Note: Does not check if method is abstract (in contrast to ObjectStreamClass implementation) to support
+        // code generation for abstract classes, where one of the subclasses has to override `writeReplace` anyway
+        if (Modifier.isStatic(modifiers) || method.getReturnType() != Object.class) {
+            return null;
         }
 
         if (Modifier.isPublic(modifiers) || Modifier.isProtected(modifiers)) {
-            return true;
+            return declaringClass;
         } else if (Modifier.isPrivate(modifiers)) {
-            return declaringClass == c;
+            return declaringClass == c ? declaringClass : null;
         }
         // package-private
         else {
             // Don't perform ClassLoader checks done by ObjectStreamClass; when class is actually
             // serialized at runtime the class loaders might differ
-            return c.getPackageName().equals(declaringClass.getPackageName());
+            if (c.getPackageName().equals(declaringClass.getPackageName())) {
+                return declaringClass;
+            } else {
+                return null;
+            }
         }
     }
 }
