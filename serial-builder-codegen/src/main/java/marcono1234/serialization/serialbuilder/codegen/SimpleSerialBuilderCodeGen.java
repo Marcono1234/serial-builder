@@ -103,6 +103,10 @@ public class SimpleSerialBuilderCodeGen {
      *      Serializable class for which the code should be generated
      * @param generateTopLevel
      *      Whether to generate top level {@code SimpleSerialBuilder} method calls
+     * @param generateForNestedNonFinal
+     *      Whether to generate code for nested types (such as field types), even when they are not {@code final} and
+     *      therefore subclasses might have a different serialization data structure. By default, only code for nested
+     *      {@code final} types is generated.
      * @return
      *      The generated Java code
      * @throws CodeGenException
@@ -111,7 +115,7 @@ public class SimpleSerialBuilderCodeGen {
      */
     // Note: Don't use Class<? extends Serializable> as parameter type to make method easier to use,
     // especially when class comes from Class.forName or similar
-    public static String generateCodeForClass(Class<?> serializableClass, boolean generateTopLevel) throws CodeGenException {
-        return ClassCodeGen.generateCode(serializableClass, generateTopLevel);
+    public static String generateCodeForClass(Class<?> serializableClass, boolean generateTopLevel, boolean generateForNestedNonFinal) throws CodeGenException {
+        return ClassCodeGen.generateCode(serializableClass, generateTopLevel, generateForNestedNonFinal);
     }
 }

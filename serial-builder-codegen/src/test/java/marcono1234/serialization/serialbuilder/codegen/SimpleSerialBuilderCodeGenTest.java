@@ -341,6 +341,18 @@ class SimpleSerialBuilderCodeGenTest {
         private static final long serialVersionUID = 1L;
 
         private static final class FinalNonSerializableClass {
+            private byte b;
+        }
+
+        private static class NonFinalSerializableClass implements Serializable {
+            @Serial
+            private static final long serialVersionUID = 1L;
+
+            private boolean b;
+            private FinalSerializableClass nested1;
+            private RecordClass nested2;
+            // Also test recursion through field types
+            private NonFinalSerializableClass recursive;
         }
 
         private static final class FinalSerializableClass implements Serializable {
@@ -348,6 +360,7 @@ class SimpleSerialBuilderCodeGenTest {
             private static final long serialVersionUID = 1L;
 
             private double d;
+            private RecordClass nested;
             // Also test recursion through field types
             private FinalSerializableClass recursive;
         }
@@ -359,12 +372,16 @@ class SimpleSerialBuilderCodeGenTest {
         private Class<?> c;
         private RecordClass r;
         // For custom final serializable class should include its class structure in generated code
-        private FinalSerializableClass f;
+        private FinalSerializableClass finalClass;
+        private NonFinalSerializableClass nonFinal;
+        private ExternalizableClass nonFinalExternalizable;
+        private AbstractSerializableClass abstractClass;
         // Non-serializable class should not cause code generation to fail
         private FinalNonSerializableClass n;
         private int[] ints;
         private Map.Entry<?, ?>[] objects;
-        private FinalSerializableClass[][] arrayOfFinalObjects;
+        private FinalSerializableClass[][] arrayOfFinalClass;
+        private NonFinalSerializableClass[] nonFinalArray;
     }
 
     @SuppressWarnings("unused")
@@ -483,7 +500,7 @@ class SimpleSerialBuilderCodeGenTest {
     }, classesProviderMethod = "dynamicClasses")
     // First parameter is used for display purposes
     void generateCodeForClass(@SuppressWarnings("unused") String typeName, Class<?> c, String expectedCode) throws CodeGenException {
-        String actualCode = SimpleSerialBuilderCodeGen.generateCodeForClass(c, false);
+        String actualCode = SimpleSerialBuilderCodeGen.generateCodeForClass(c, false, false);
         assertEquals(expectedCode, actualCode);
     }
 
@@ -500,7 +517,21 @@ class SimpleSerialBuilderCodeGenTest {
     }, classesProviderMethod = "dynamicTopLevelClasses")
     // First parameter is used for display purposes
     void generateCodeForClass_TopLevel(@SuppressWarnings("unused") String typeName, Class<?> c, String expectedCode) throws CodeGenException {
-        String actualCode = SimpleSerialBuilderCodeGen.generateCodeForClass(c, true);
+        String actualCode = SimpleSerialBuilderCodeGen.generateCodeForClass(c, true, false);
+        assertEquals(expectedCode, actualCode);
+    }
+
+    /**
+     * Tests {@link SimpleSerialBuilderCodeGen#generateCodeForClass(Class, boolean, boolean)} with
+     * {@code generateForNestedNonFinal = true}.
+     */
+    @ParameterizedTest(name = "[{index}] {0}")
+    @ClassDataSource(expectedCodeDir = "/simple-api-codegen-class-top-level-non-final", classes = {
+        SerializableClass.class,
+    })
+    // First parameter is used for display purposes
+    void generateCodeForClass_TopLevel_NonFinal(@SuppressWarnings("unused") String typeName, Class<?> c, String expectedCode) throws CodeGenException {
+        String actualCode = SimpleSerialBuilderCodeGen.generateCodeForClass(c, true, true);
         assertEquals(expectedCode, actualCode);
     }
 
@@ -515,16 +546,16 @@ class SimpleSerialBuilderCodeGenTest {
         Map.Entry[].class,
     })
     void generateCodeForClass_TopLevel_Unsupported(Class<?> c) {
-        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(c, true));
+        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(c, true, false));
         assertEquals("Unsupported top level type " + c.getTypeName(), e.getMessage());
     }
 
     @Test
     void generateCodeForClass_Unsupported_ObjectStreamClass() {
-        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(ObjectStreamClass.class, false));
+        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(ObjectStreamClass.class, false, false));
         assertEquals("Writing ObjectStreamClass is unsupported", e.getMessage());
 
-        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(ObjectStreamClass.class, true));
+        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(ObjectStreamClass.class, true, false));
         assertEquals("Unsupported top level type java.io.ObjectStreamClass", e.getMessage());
     }
 
@@ -535,10 +566,10 @@ class SimpleSerialBuilderCodeGenTest {
 
         String expectedMessage = "Class " + NonSerializableClass.class.getTypeName() + " does not implement Serializable";
 
-        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(NonSerializableClass.class, false));
+        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(NonSerializableClass.class, false, false));
         assertEquals(expectedMessage, e.getMessage());
 
-        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(NonSerializableClass.class, true));
+        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(NonSerializableClass.class, true, false));
         assertEquals(expectedMessage, e.getMessage());
     }
 
@@ -557,10 +588,10 @@ class SimpleSerialBuilderCodeGenTest {
     void generateCodeForClass_Interface(Class<?> c) {
         String expectedMessage = "Code generation for interface (" + c.getTypeName() + ") is not supported";
 
-        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(c, false));
+        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(c, false, false));
         assertEquals(expectedMessage, e.getMessage());
 
-        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(c, true));
+        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(c, true, false));
         assertEquals(expectedMessage, e.getMessage());
     }
 
@@ -571,10 +602,10 @@ class SimpleSerialBuilderCodeGenTest {
     void generateCodeForClass_AbstractExternalizable() {
         String expectedMessage = "Code generation for abstract Externalizable (" + AbstractExternalizable.class.getTypeName() + ") is not supported";
 
-        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(AbstractExternalizable.class, false));
+        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(AbstractExternalizable.class, false, false));
         assertEquals(expectedMessage, e.getMessage());
 
-        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(AbstractExternalizable.class, true));
+        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(AbstractExternalizable.class, true, false));
         assertEquals(expectedMessage, e.getMessage());
     }
 }

@@ -28,7 +28,7 @@ public class ClassCodeGen {
     private ClassCodeGen() {
     }
 
-    public static String generateCode(Class<?> c, boolean generateTopLevel) throws CodeGenException {
+    public static String generateCode(Class<?> c, boolean generateTopLevel, boolean generateForNestedNonFinal) throws CodeGenException {
         Objects.requireNonNull(c);
 
         if (c.isInterface()) {
@@ -37,14 +37,14 @@ public class ClassCodeGen {
 
         CodeWriter codeWriter = new CodeWriter(true, true);
         if (generateTopLevel) {
-            writeTopLevelCode(codeWriter, c);
+            writeTopLevelCode(codeWriter, c, generateForNestedNonFinal);
         } else {
-            writeNonTopLevelCode(codeWriter, c, createRecursionTracker(Set.of()));
+            writeNonTopLevelCode(codeWriter, c, createRecursionTracker(Set.of()), generateForNestedNonFinal);
         }
         return codeWriter.getCode();
     }
 
-    private static void writeTopLevelCode(CodeWriter codeWriter, Class<?> c) throws CodeGenException {
+    private static void writeTopLevelCode(CodeWriter codeWriter, Class<?> c, boolean generateForNestedNonFinal) throws CodeGenException {
         String startLinePrefix = "byte[] serialData = SimpleSerialBuilder.";
 
         // Types with custom serialization format, but without dedicated top level builder method
@@ -55,7 +55,7 @@ public class ClassCodeGen {
         } else if (Externalizable.class.isAssignableFrom(c)) {
             writeExternalizableCode(codeWriter, c, startLinePrefix + "externalizableObject", true);
         } else if (Serializable.class.isAssignableFrom(c)) {
-            writeSerializableCode(codeWriter, c, createRecursionTracker(Set.of()), startLinePrefix + "startSerializableObject", true);
+            writeSerializableCode(codeWriter, c, createRecursionTracker(Set.of()), startLinePrefix + "startSerializableObject", true, generateForNestedNonFinal);
         } else {
             throw new CodeGenException("Class " + c.getTypeName() + " does not implement Serializable");
         }
@@ -99,15 +99,15 @@ public class ClassCodeGen {
         codeWriter.writeLine("})" + (isTopLevel ? ";" : ""));
     }
 
-    private static void writeSerializableCode(CodeWriter codeWriter, Class<?> serializableClass, Set<Class<?>> recursionTracker, String firstLinePrefix, boolean isTopLevel) throws CodeGenException {
+    private static void writeSerializableCode(CodeWriter codeWriter, Class<?> serializableClass, Set<Class<?>> recursionTracker, String firstLinePrefix, boolean isTopLevel, boolean generateForNestedNonFinal) throws CodeGenException {
         codeWriter.writeLine(firstLinePrefix + "()");
         codeWriter.increaseIndentation();
-        writeClassHierarchyData(codeWriter, serializableClass, recursionTracker);
+        writeClassHierarchyData(codeWriter, serializableClass, recursionTracker, generateForNestedNonFinal);
         codeWriter.decreaseIndentation();
         codeWriter.writeLine(".endObject()" + (isTopLevel ? ";" : ""));
     }
 
-    private static void writeNonTopLevelCode(CodeWriter codeWriter, Class<?> c, Set<Class<?>> recursionTracker) throws CodeGenException {
+    private static void writeNonTopLevelCode(CodeWriter codeWriter, Class<?> c, Set<Class<?>> recursionTracker, boolean generateForNestedNonFinal) throws CodeGenException {
         String valuePlaceholder = "/* value */";
 
         if (Enum.class.isAssignableFrom(c)) {
@@ -128,8 +128,8 @@ public class ClassCodeGen {
 
                 Set<Class<?>> recursionTrackerClone = createRecursionTracker(recursionTracker);
 
-                if (hasDefiniteSerialFormat(componentType) && recursionTrackerClone.add(componentType)) {
-                    writeNonTopLevelCode(codeWriter, componentType, recursionTrackerClone);
+                if (hasDefiniteSerialFormat(componentType, generateForNestedNonFinal) && recursionTrackerClone.add(componentType)) {
+                    writeNonTopLevelCode(codeWriter, componentType, recursionTrackerClone, generateForNestedNonFinal);
                     // Write regular comment for optional more elements
                     codeWriter.writeComment("... more array elements");
                 } else {
@@ -149,7 +149,7 @@ public class ClassCodeGen {
         } else if (Externalizable.class.isAssignableFrom(c)) {
             writeExternalizableCode(codeWriter, c, ".externalizableObject", false);
         } else if (Serializable.class.isAssignableFrom(c)) {
-            writeSerializableCode(codeWriter, c, recursionTracker, ".beginSerializableObject", false);
+            writeSerializableCode(codeWriter, c, recursionTracker, ".beginSerializableObject", false, generateForNestedNonFinal);
         } else {
             throw new CodeGenException("Class " + c.getTypeName() + " does not implement Serializable");
         }
@@ -166,12 +166,14 @@ public class ClassCodeGen {
      * enums, or because the class is final (includes arrays, Class and String). This can be used to determine
      * whether to generate code recursively.
      */
-    private static boolean hasDefiniteSerialFormat(Class<?> c) {
+    private static boolean hasDefiniteSerialFormat(Class<?> c, boolean allowNonFinal) {
         // For enum `final` check does not work because it might have anonymous subclasses
-        return Serializable.class.isAssignableFrom(c) && (Enum.class.isAssignableFrom(c) || Modifier.isFinal(c.getModifiers()));
+        return Serializable.class.isAssignableFrom(c) && (
+            Enum.class.isAssignableFrom(c) || Modifier.isFinal(c.getModifiers()) || (allowNonFinal && !isAbstract(c))
+        );
     }
 
-    private static void writeClassHierarchyData(CodeWriter codeWriter, Class<?> topClass, Set<Class<?>> recursionTracker) throws CodeGenException {
+    private static void writeClassHierarchyData(CodeWriter codeWriter, Class<?> topClass, Set<Class<?>> recursionTracker, boolean generateForNestedNonFinal) throws CodeGenException {
         // Check for declared or inherited writeReplace() method
         Class<?> classDeclaringWriteReplace = getClassDeclaringWriteReplaceMethod(topClass);
 
@@ -212,8 +214,8 @@ public class ClassCodeGen {
                     Set<Class<?>> currentRecursionTracker = createRecursionTracker(recursionTracker);
                     currentRecursionTracker.add(currentClass);
 
-                    if (hasDefiniteSerialFormat(fieldType) && currentRecursionTracker.add(fieldType)) {
-                        writeNonTopLevelCode(codeWriter, fieldType, currentRecursionTracker);
+                    if (hasDefiniteSerialFormat(fieldType, generateForNestedNonFinal) && currentRecursionTracker.add(fieldType)) {
+                        writeNonTopLevelCode(codeWriter, fieldType, currentRecursionTracker, generateForNestedNonFinal);
                     } else {
                         writeBlockComment(codeWriter, "... field data");
                     }

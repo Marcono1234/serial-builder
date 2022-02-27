@@ -1,4 +1,4 @@
-.beginSerializableObject()
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
     .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass", 1L)
         .primitiveIntField("i", /* value */)
         .beginObjectField("abstractClass", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$AbstractSerializableClass")
@@ -68,21 +68,90 @@
              */
         .endField()
         .beginObjectField("nonFinal", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$NonFinalSerializableClass")
-            /*
-             * ... field data
-             */
+            .beginSerializableObject()
+                .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$NonFinalSerializableClass", 1L)
+                    .primitiveBooleanField("b", /* value */)
+                    .beginObjectField("nested1", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass")
+                        .beginSerializableObject()
+                            .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass", 1L)
+                                .primitiveDoubleField("d", /* value */)
+                                .beginObjectField("nested", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$RecordClass")
+                                    .beginSerializableObject()
+                                        .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$RecordClass", 0L)
+                                            .primitiveIntField("i", /* value */)
+                                        .endClassData()
+                                    .endObject()
+                                .endField()
+                                .beginObjectField("recursive", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass")
+                                    /*
+                                     * ... field data
+                                     */
+                                .endField()
+                            .endClassData()
+                        .endObject()
+                    .endField()
+                    .beginObjectField("nested2", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$RecordClass")
+                        .beginSerializableObject()
+                            .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$RecordClass", 0L)
+                                .primitiveIntField("i", /* value */)
+                            .endClassData()
+                        .endObject()
+                    .endField()
+                    .beginObjectField("recursive", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$NonFinalSerializableClass")
+                        /*
+                         * ... field data
+                         */
+                    .endField()
+                .endClassData()
+            .endObject()
         .endField()
         .beginObjectField("nonFinalArray", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$NonFinalSerializableClass[]")
             .beginObjectArray("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$NonFinalSerializableClass[]")
-                /*
-                 * ... array elements
-                 */
+                .beginSerializableObject()
+                    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$NonFinalSerializableClass", 1L)
+                        .primitiveBooleanField("b", /* value */)
+                        .beginObjectField("nested1", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass")
+                            .beginSerializableObject()
+                                .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass", 1L)
+                                    .primitiveDoubleField("d", /* value */)
+                                    .beginObjectField("nested", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$RecordClass")
+                                        .beginSerializableObject()
+                                            .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$RecordClass", 0L)
+                                                .primitiveIntField("i", /* value */)
+                                            .endClassData()
+                                        .endObject()
+                                    .endField()
+                                    .beginObjectField("recursive", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass")
+                                        /*
+                                         * ... field data
+                                         */
+                                    .endField()
+                                .endClassData()
+                            .endObject()
+                        .endField()
+                        .beginObjectField("nested2", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$RecordClass")
+                            .beginSerializableObject()
+                                .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$RecordClass", 0L)
+                                    .primitiveIntField("i", /* value */)
+                                .endClassData()
+                            .endObject()
+                        .endField()
+                        .beginObjectField("recursive", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$NonFinalSerializableClass")
+                            /*
+                             * ... field data
+                             */
+                        .endField()
+                    .endClassData()
+                .endObject()
+                // ... more array elements
             .endArray()
         .endField()
         .beginObjectField("nonFinalExternalizable", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$ExternalizableClass")
-            /*
-             * ... field data
-             */
+            .externalizableObject("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$ExternalizableClass", 1L, writer -> {
+                /*
+                 * ... object data
+                 */
+            })
         .endField()
         .beginObjectField("objects", "java.util.Map$Entry[]")
             .beginObjectArray("java.util.Map$Entry[]")
@@ -102,4 +171,4 @@
             .string(/* value */)
         .endField()
     .endClassData()
-.endObject()
+.endObject();
