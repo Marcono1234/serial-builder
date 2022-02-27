@@ -41,49 +41,58 @@ public class ClassCodeGen {
     }
 
     private static void writeTopLevelCode(CodeWriter codeWriter, Class<?> c) throws CodeGenException {
-        StringBuilder startLineBuilder = new StringBuilder("byte[] serialData = SimpleSerialBuilder.");
+        String startLinePrefix = "byte[] serialData = SimpleSerialBuilder.";
 
         // Types with custom serialization format, but without dedicated top level builder method
         if (Enum.class.isAssignableFrom(c) || c.isArray() || c == ObjectStreamClass.class || c == Class.class || c == String.class) {
             throw new CodeGenException("Unsupported top level type " + c.getTypeName());
         } else if (Proxy.isProxyClass(c)) {
-            startLineBuilder.append("startProxyObject(");
-            Iterator<String> interfaceNamesIterator = Arrays.stream(c.getInterfaces()).map(ClassCodeGen::createTypeNameLiteral).iterator();
-            while (interfaceNamesIterator.hasNext()) {
-                startLineBuilder.append(interfaceNamesIterator.next());
-
-                if (interfaceNamesIterator.hasNext()) {
-                    startLineBuilder.append(", ");
-                }
-            }
-            startLineBuilder.append(')');
-
-            codeWriter.writeLine(startLineBuilder.toString());
-            codeWriter.increaseIndentation();
-            writeBlockComment(codeWriter, "... invocation handler");
-            codeWriter.decreaseIndentation();
-            codeWriter.writeLine(".endProxyObject();");
+            writeProxyCode(codeWriter, c, startLinePrefix + "startProxyObject", true);
         } else if (Externalizable.class.isAssignableFrom(c)) {
-            String startLine = startLineBuilder.append("externalizableObject(")
-                .append(createTypeNameLiteral(c))
-                .append(", ")
-                .append(createSerialVersionUidLiteral(c))
-                .append(", writer -> {")
-                .toString();
-            codeWriter.writeLine(startLine);
-            codeWriter.increaseIndentation();
-            writeBlockComment(codeWriter, "... object data");
-            codeWriter.decreaseIndentation();
-            codeWriter.writeLine("});");
+            writeExternalizableCode(codeWriter, c, startLinePrefix + "externalizableObject", true);
         } else if (Serializable.class.isAssignableFrom(c)) {
-            codeWriter.writeLine(startLineBuilder.append("startSerializableObject()").toString());
-            codeWriter.increaseIndentation();
-            writeClassHierarchyData(codeWriter, c, createRecursionTracker(Set.of()));
-            codeWriter.decreaseIndentation();
-            codeWriter.writeLine(".endObject();");
+            writeSerializableCode(codeWriter, c, createRecursionTracker(Set.of()), startLinePrefix + "startSerializableObject", true);
         } else {
             throw new CodeGenException("Class " + c.getTypeName() + " does not implement Serializable");
         }
+    }
+
+    private static void writeProxyCode(CodeWriter codeWriter, Class<?> proxyClass, String firstLinePrefix, boolean isTopLevel) {
+        StringBuilder firstLineBuilder = new StringBuilder(firstLinePrefix);
+        firstLineBuilder.append('(');
+
+        Iterator<String> interfaceNamesIterator = Arrays.stream(proxyClass.getInterfaces()).map(ClassCodeGen::createTypeNameLiteral).iterator();
+        while (interfaceNamesIterator.hasNext()) {
+            firstLineBuilder.append(interfaceNamesIterator.next());
+
+            if (interfaceNamesIterator.hasNext()) {
+                firstLineBuilder.append(", ");
+            }
+        }
+        firstLineBuilder.append(')');
+
+        codeWriter.writeLine(firstLineBuilder.toString());
+        codeWriter.increaseIndentation();
+        writeBlockComment(codeWriter, "... invocation handler");
+        codeWriter.decreaseIndentation();
+        codeWriter.writeLine(".endProxyObject()" + (isTopLevel ? ";" : ""));
+    }
+
+    private static void writeExternalizableCode(CodeWriter codeWriter, Class<?> externalizableClass, String firstLinePrefix, boolean isTopLevel) {
+          String firstLine = firstLinePrefix + "(" + createTypeNameLiteral(externalizableClass) + ", " + createSerialVersionUidLiteral(externalizableClass) + ", writer -> {";
+        codeWriter.writeLine(firstLine);
+        codeWriter.increaseIndentation();
+        writeBlockComment(codeWriter, "... object data");
+        codeWriter.decreaseIndentation();
+        codeWriter.writeLine("})" + (isTopLevel ? ";" : ""));
+    }
+
+    private static void writeSerializableCode(CodeWriter codeWriter, Class<?> serializableClass, Set<Class<?>> recursionTracker, String firstLinePrefix, boolean isTopLevel) throws CodeGenException {
+        codeWriter.writeLine(firstLinePrefix + "()");
+        codeWriter.increaseIndentation();
+        writeClassHierarchyData(codeWriter, serializableClass, recursionTracker);
+        codeWriter.decreaseIndentation();
+        codeWriter.writeLine(".endObject()" + (isTopLevel ? ";" : ""));
     }
 
     private static void writeNonTopLevelCode(CodeWriter codeWriter, Class<?> c, Set<Class<?>> recursionTracker) throws CodeGenException {
@@ -124,34 +133,11 @@ public class ClassCodeGen {
         } else if (c == String.class) {
             codeWriter.writeLine(".string(" + valuePlaceholder + ")");
         } else if (Proxy.isProxyClass(c)) {
-            StringBuilder startLineBuilder = new StringBuilder(".beginProxyObject(");
-            Iterator<String> interfaceNamesIterator = Arrays.stream(c.getInterfaces()).map(ClassCodeGen::createTypeNameLiteral).iterator();
-            while (interfaceNamesIterator.hasNext()) {
-                startLineBuilder.append(interfaceNamesIterator.next());
-
-                if (interfaceNamesIterator.hasNext()) {
-                    startLineBuilder.append(", ");
-                }
-            }
-            startLineBuilder.append(')');
-
-            codeWriter.writeLine(startLineBuilder.toString());
-            codeWriter.increaseIndentation();
-            writeBlockComment(codeWriter, "... invocation handler");
-            codeWriter.decreaseIndentation();
-            codeWriter.writeLine(".endProxyObject()");
+            writeProxyCode(codeWriter, c, ".beginProxyObject", false);
         } else if (Externalizable.class.isAssignableFrom(c)) {
-            codeWriter.writeLine(".externalizableObject(" + createTypeNameLiteral(c) + ", " + createSerialVersionUidLiteral(c) + ", writer -> {");
-            codeWriter.increaseIndentation();
-            writeBlockComment(codeWriter, "... object data");
-            codeWriter.decreaseIndentation();
-            codeWriter.writeLine("});");
+            writeExternalizableCode(codeWriter, c, ".externalizableObject", false);
         } else if (Serializable.class.isAssignableFrom(c)) {
-            codeWriter.writeLine(".beginSerializableObject()");
-            codeWriter.increaseIndentation();
-            writeClassHierarchyData(codeWriter, c, recursionTracker);
-            codeWriter.decreaseIndentation();
-            codeWriter.writeLine(".endObject()");
+            writeSerializableCode(codeWriter, c, recursionTracker, ".beginSerializableObject", false);
         } else {
             throw new CodeGenException("Class " + c.getTypeName() + " does not implement Serializable");
         }
