@@ -1,0 +1,12 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    // Class has writeReplace() method
+    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClassWithWriteReplace", 1L)
+        .primitiveIntField("i", /* value */)
+        .beginObjectField("s", "java.lang.String")
+            .string(/* value */)
+        .endField()
+    .endClassData()
+    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableSubclass", 2L)
+        .primitiveFloatField("f", /* value */)
+    .endClassData()
+.endObject();

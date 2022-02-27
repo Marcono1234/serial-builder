@@ -389,9 +389,17 @@ class SimpleSerialBuilderCodeGenTest {
         private String s;
 
         @Serial
-        private Object writeReplace() {
+        Object writeReplace() {
             return "test";
         }
+    }
+
+    @SuppressWarnings("unused")
+    private static class SerializableSubclass extends SerializableClassWithWriteReplace {
+        @Serial
+        private static final long serialVersionUID = 2L;
+
+        private float f;
     }
 
     private static class ExternalizableClass implements Externalizable {
@@ -439,6 +447,7 @@ class SimpleSerialBuilderCodeGenTest {
         SerializableClass.class,
         SerializableClassWithWriteObject.class,
         SerializableClassWithWriteReplace.class,
+        SerializableSubclass.class,
         ExternalizableClass.class,
         RecordClass.class,
         String.class,
@@ -459,6 +468,7 @@ class SimpleSerialBuilderCodeGenTest {
         SerializableClass.class,
         SerializableClassWithWriteObject.class,
         SerializableClassWithWriteReplace.class,
+        SerializableSubclass.class,
         ExternalizableClass.class,
         RecordClass.class,
     }, classesProviderMethod = "dynamicTopLevelClasses")
