@@ -1,0 +1,5 @@
+.beginObjectArray("java.util.Map$Entry[]")
+    /*
+     * ... array elements
+     */
+.endArray()

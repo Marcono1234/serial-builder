@@ -1,0 +1,69 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass", 1L)
+        .primitiveIntField("i", /* value */)
+        .beginObjectField("arrayOfFinalObjects", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass[][]")
+            .beginObjectArray("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass[][]")
+                .beginObjectArray("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass[]")
+                    .beginSerializableObject()
+                        .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass", 1L)
+                            .primitiveDoubleField("d", /* value */)
+                            .beginObjectField("recursive", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass")
+                                /*
+                                 * ... field data
+                                 */
+                            .endField()
+                        .endClassData()
+                    .endObject()
+                    // ... more array elements
+                .endArray()
+                // ... more array elements
+            .endArray()
+        .endField()
+        .beginObjectField("c", "java.lang.Class")
+            .class_(/* value */)
+        .endField()
+        .beginObjectField("e", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$EnumClass")
+            .enumConstant("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$EnumClass", /* constant name */)
+        .endField()
+        .beginObjectField("enumClass", "java.lang.Enum")
+            .enumConstant(/* enum class */, /* constant name */)
+        .endField()
+        .beginObjectField("f", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass")
+            .beginSerializableObject()
+                .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass", 1L)
+                    .primitiveDoubleField("d", /* value */)
+                    .beginObjectField("recursive", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalSerializableClass")
+                        /*
+                         * ... field data
+                         */
+                    .endField()
+                .endClassData()
+            .endObject()
+        .endField()
+        .beginObjectField("ints", "int[]")
+            .array(/* int array */)
+        .endField()
+        .beginObjectField("n", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClass$FinalNonSerializableClass")
+            /*
+             * ... field data
+             */
+        .endField()
+        .beginObjectField("objects", "java.util.Map$Entry[]")
+            .beginObjectArray("java.util.Map$Entry[]")
+                /*
+                 * ... array elements
+                 */
+            .endArray()
+        .endField()
+        .beginObjectField("r", "marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$RecordClass")
+            .beginSerializableObject()
+                .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$RecordClass", 0L)
+                    .primitiveIntField("i", /* value */)
+                .endClassData()
+            .endObject()
+        .endField()
+        .beginObjectField("s", "java.lang.String")
+            .string(/* value */)
+        .endField()
+    .endClassData()
+.endObject();

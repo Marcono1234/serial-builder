@@ -1,0 +1,5 @@
+byte[] serialData = SimpleSerialBuilder.externalizableObject("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$ExternalizableClass", 1L, writer -> {
+    /*
+     * ... object data
+     */
+});

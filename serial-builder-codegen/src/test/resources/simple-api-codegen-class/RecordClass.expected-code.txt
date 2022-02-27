@@ -1,0 +1,5 @@
+.beginSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$RecordClass", 0L)
+        .primitiveIntField("i", /* value */)
+    .endClassData()
+.endObject()

@@ -153,7 +153,7 @@ public class SerialDataCodeGen implements Closeable {
             case TC_ARRAY -> readNewArray();
             case TC_STRING, TC_LONGSTRING -> readNewString(type);
             case TC_ENUM -> readNewEnum();
-            case TC_CLASSDESC, TC_PROXYCLASSDESC -> throw new UnsupportedStreamFeatureException("Class descriptor as object");
+            case TC_CLASSDESC, TC_PROXYCLASSDESC -> throw new UnsupportedStreamFeatureException("Class descriptor as object (ObjectStreamClass)");
             case TC_REFERENCE -> {
                 var handle = readPrevObject();
                 Class<? extends StreamObject> referencedObjectType = handle.getObjectType();

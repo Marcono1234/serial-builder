@@ -1,5 +1,6 @@
 package marcono1234.serialization.serialbuilder.codegen;
 
+import marcono1234.serialization.serialbuilder.codegen.implementation.ClassCodeGen;
 import marcono1234.serialization.serialbuilder.codegen.implementation.SerialDataCodeGen;
 
 import java.io.ByteArrayInputStream;
@@ -84,5 +85,31 @@ public class SimpleSerialBuilderCodeGen {
         } catch (IOException e) {
             throw new CodeGenException("Code generation failed: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * For the given serializable class, generates the corresponding {@code marcono1234.serialization.serialbuilder.SimpleSerialBuilder}
+     * calls creating serialization data for instances of the class. The generated code only represents a rough outline;
+     * for missing values, placeholder comments are included. This method is mainly intended for situations where
+     * creating serialization data for a class is not easily possible, or where a {@code writeReplace()} method would
+     * prevent obtaining serialization data for the class itself. In all other cases it is usually easier to use
+     * {@link #generateCode(byte[])}.
+     *
+     * <p>The generated code can either be created for top level builder method calls on {@code SimpleSerialBuilder}
+     * ({@code generateTopLevel} is {@code true}), or for builder method calls in the call chain ({@code generateTopLevel}
+     * is {@code false}).
+     *
+     * @param serializableClass
+     *      Serializiable class for which the code should be generated
+     * @param generateTopLevel
+     *      Whether to generate top level {@code SimpleSerialBuilder} method calls
+     * @return
+     *      The generated Java code
+     * @throws CodeGenException
+     *      If code generation fails because the class does not implement {@code Serializable}, or because the class
+     *      is not supported
+     */
+    public static String generateCodeForClass(Class<?> serializableClass, boolean generateTopLevel) throws CodeGenException {
+        return ClassCodeGen.generateCode(serializableClass, generateTopLevel);
     }
 }

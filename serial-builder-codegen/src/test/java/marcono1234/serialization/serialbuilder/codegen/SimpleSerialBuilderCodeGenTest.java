@@ -3,27 +3,46 @@ package marcono1234.serialization.serialbuilder.codegen;
 import marcono1234.serialization.serialbuilder.SimpleSerialBuilder;
 import marcono1234.serialization.serialbuilder.builder.api.Handle;
 import net.openhft.compiler.CompilerUtils;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionConfigurationException;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.support.AnnotationConsumer;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
 import java.io.PrintWriter;
+import java.io.Serial;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -49,11 +68,15 @@ class SimpleSerialBuilderCodeGenTest {
             }
         }
 
-        /** Name of the directory containing the serialization data */
+        /** Resource path of the directory containing the serialization data */
         String value();
 
         /** Type of the provided serialization data */
         Type type() default Type.SUCCESSFUL;
+    }
+
+    private static String readNormalizedString(Path path) throws IOException {
+        return Files.readString(path).replaceAll("\\R", "\n");
     }
 
     static class SerializationDataProvider implements ArgumentsProvider, AnnotationConsumer<SerializationDataSource> {
@@ -110,7 +133,7 @@ class SimpleSerialBuilderCodeGenTest {
                 streamBuilder.add(Arguments.of(
                     fileName,
                     hexFormat.parseHex(Files.readString(serialDataFileEntry.getValue())),
-                    Files.readString(expectedDataFile).replaceAll("\\R", "\n")
+                    readNormalizedString(expectedDataFile)
                 ));
             }
 
@@ -206,5 +229,280 @@ class SimpleSerialBuilderCodeGenTest {
     void codeGeneration_UnsupportedFeatures_Failing(@SuppressWarnings("unused") String fileName, byte[] serialData, String expectedExceptionMessage) {
         var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCode(serialData));
         assertEquals(expectedExceptionMessage, e.getMessage());
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @ArgumentsSource(ClassDataProvider.class)
+    @interface ClassDataSource {
+        /** Resource path of the directory containing the expected code */
+        String expectedCodeDir();
+        /** Classes to generate code for */
+        Class<?>[] classes();
+        /** Name of method providing classes which cannot be referenced statically */
+        String classesProviderMethod() default "";
+    }
+
+    static class ClassDataProvider implements ArgumentsProvider, AnnotationConsumer<ClassDataSource> {
+        private String expectedCodeDir;
+        private Class<?>[] classes;
+        private String classesProviderMethodName;
+
+        @Override
+        public void accept(ClassDataSource classDataSource) {
+            expectedCodeDir = classDataSource.expectedCodeDir();
+            classes = classDataSource.classes();
+            classesProviderMethodName = classDataSource.classesProviderMethod();
+        }
+
+        @Override
+        public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
+            URL resourceUrl = getClass().getResource(expectedCodeDir);
+            if (resourceUrl == null) {
+                throw new ExtensionConfigurationException("Resource directory '" + expectedCodeDir + "' does not exist");
+            }
+
+            Map<Class<?>, String> classesToName = new LinkedHashMap<>();
+            for (Class<?> c : classes) {
+                classesToName.put(c, c.getSimpleName());
+            }
+
+            if (!classesProviderMethodName.isEmpty()) {
+                Method classesProviderMethod;
+                try {
+                    classesProviderMethod = SimpleSerialBuilderCodeGenTest.class.getDeclaredMethod(classesProviderMethodName);
+                } catch (NoSuchMethodException e) {
+                    throw new ExtensionConfigurationException("Provider method '" + classesProviderMethodName + "' does not exist", e);
+                }
+                if (!Modifier.isStatic(classesProviderMethod.getModifiers())) {
+                    throw new ExtensionConfigurationException("Provider method '" + classesProviderMethodName + "' is not static");
+                }
+                if (classesProviderMethod.getReturnType() != Stream.class) {
+                    throw new ExtensionConfigurationException("Provider method '" + classesProviderMethodName + "' has wrong return type");
+                }
+
+                // Use Entry<Class, String> to allow specifying custom name, since some class names (e.g. of proxy)
+                // might be implementation dependent
+                @SuppressWarnings("unchecked")
+                Stream<Map.Entry<Class<?>, String>> additionalClasses = (Stream<Map.Entry<Class<?>, String>>) classesProviderMethod.invoke(null);
+                additionalClasses.forEach(entry -> {
+                    Class<?> c = entry.getKey();
+                    var existing = classesToName.put(c, entry.getValue());
+                    if (existing != null) {
+                        throw new ExtensionConfigurationException("Duplicate class " + c);
+                    }
+                });
+            }
+
+            Map<String, Path> expectedFilesMap;
+            try (Stream<Path> files = Files.list(Path.of(resourceUrl.toURI())).filter(Files::isRegularFile)) {
+                // Wrap in HashMap to make sure map is mutable
+                expectedFilesMap = new HashMap<>(files.collect(Collectors.toMap(p -> p.getFileName().toString(), p -> p)));
+            }
+
+            Stream.Builder<Arguments> streamBuilder = Stream.builder();
+            List<String> classNamesWithMissingCode = new ArrayList<>();
+            for (Map.Entry<Class<?>, String> entry : classesToName.entrySet()) {
+                Class<?> c = entry.getKey();
+                String className = entry.getValue();
+                Path expectedCodePath = expectedFilesMap.remove(className + ".expected-code.txt");
+                if (expectedCodePath == null) {
+                    classNamesWithMissingCode.add(className);
+                    continue;
+                }
+
+                streamBuilder.add(Arguments.of(
+                    className,
+                    c,
+                    readNormalizedString(expectedCodePath)
+                ));
+            }
+            if (!classNamesWithMissingCode.isEmpty()) {
+                throw new ExtensionConfigurationException("Missing expected code files for " + classNamesWithMissingCode);
+            }
+            if (!expectedFilesMap.isEmpty()) {
+                throw new ExtensionConfigurationException("Unused files: " + expectedFilesMap.keySet());
+            }
+
+            return streamBuilder.build();
+        }
+    }
+
+    private enum EnumClass {
+        A {}
+    }
+
+    private record RecordClass(int i) implements Serializable {
+    }
+
+    @SuppressWarnings("unused")
+    private static class SerializableClass implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        private static final class FinalNonSerializableClass {
+        }
+
+        private static final class FinalSerializableClass implements Serializable {
+            @Serial
+            private static final long serialVersionUID = 1L;
+
+            private double d;
+            // Also test recursion through field types
+            private FinalSerializableClass recursive;
+        }
+
+        private int i;
+        private String s;
+        private Enum<?> enumClass;
+        private EnumClass e;
+        private Class<?> c;
+        private RecordClass r;
+        // For custom final serializable class should include its class structure in generated code
+        private FinalSerializableClass f;
+        // Non-serializable class should not cause code generation to fail
+        private FinalNonSerializableClass n;
+        private int[] ints;
+        private Map.Entry<?, ?>[] objects;
+        private FinalSerializableClass[][] arrayOfFinalObjects;
+    }
+
+    @SuppressWarnings("unused")
+    private static class SerializableClassWithWriteObject implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        private int i;
+        private String s;
+
+        @Serial
+        private void writeObject(ObjectOutputStream objOut) {
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static class SerializableClassWithWriteReplace implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        private int i;
+        private String s;
+
+        @Serial
+        private Object writeReplace() {
+            return "test";
+        }
+    }
+
+    private static class ExternalizableClass implements Externalizable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        public ExternalizableClass() {
+        }
+
+        @Override
+        public void writeExternal(ObjectOutput out) {
+        }
+
+        @Override
+        public void readExternal(ObjectInput in) {
+        }
+    }
+
+    private static Stream<Map.Entry<Class<?>, String>> dynamicTopLevelClasses() {
+        class InvocationHandlerImpl implements InvocationHandler {
+            @SuppressWarnings("SuspiciousInvocationHandlerImplementation")
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) {
+                return null;
+            }
+        }
+        Class<?> proxyClass = Proxy.newProxyInstance(null, new Class[] {Runnable.class, Callable.class}, new InvocationHandlerImpl()).getClass();
+
+        return Stream.of(
+            Map.entry(proxyClass, "ProxyClass")
+        );
+    }
+
+    // Invoked through reflection
+    @SuppressWarnings("unused")
+    private static Stream<Map.Entry<Class<?>, String>> dynamicClasses() {
+        return Stream.concat(dynamicTopLevelClasses(), Stream.of(
+            // For anonymous enum subclass generated code should use declaring enum class
+            Map.entry(EnumClass.A.getClass(), "EnumSubclass")
+        ));
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @ClassDataSource(expectedCodeDir = "/simple-api-codegen-class", classes = {
+        SerializableClass.class,
+        SerializableClassWithWriteObject.class,
+        SerializableClassWithWriteReplace.class,
+        ExternalizableClass.class,
+        RecordClass.class,
+        String.class,
+        Class.class,
+        Enum.class,
+        EnumClass.class,
+        int[].class,
+        Map.Entry[].class,
+    }, classesProviderMethod = "dynamicClasses")
+    // First parameter is used for display purposes
+    void generateCodeForClass(@SuppressWarnings("unused") String typeName, Class<?> c, String expectedCode) throws CodeGenException {
+        String actualCode = SimpleSerialBuilderCodeGen.generateCodeForClass(c, false);
+        assertEquals(expectedCode, actualCode);
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @ClassDataSource(expectedCodeDir = "/simple-api-codegen-class-top-level", classes = {
+        SerializableClass.class,
+        SerializableClassWithWriteObject.class,
+        SerializableClassWithWriteReplace.class,
+        ExternalizableClass.class,
+        RecordClass.class,
+    }, classesProviderMethod = "dynamicTopLevelClasses")
+    // First parameter is used for display purposes
+    void generateCodeForClass_TopLevel(@SuppressWarnings("unused") String typeName, Class<?> c, String expectedCode) throws CodeGenException {
+        String actualCode = SimpleSerialBuilderCodeGen.generateCodeForClass(c, true);
+        assertEquals(expectedCode, actualCode);
+    }
+
+    @ParameterizedTest
+    @ValueSource(classes = {
+        String.class,
+        Class.class,
+        ObjectStreamClass.class,
+        Enum.class,
+        EnumClass.class,
+        int[].class,
+        Map.Entry[].class,
+    })
+    void generateCodeForClass_TopLevel_Unsupported(Class<?> c) {
+        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(c, true));
+        assertEquals("Unsupported top level type " + c.getTypeName(), e.getMessage());
+    }
+
+    @Test
+    void generateCodeForClass_Unsupported_ObjectStreamClass() {
+        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(ObjectStreamClass.class, false));
+        assertEquals("Writing ObjectStreamClass is unsupported", e.getMessage());
+
+        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(ObjectStreamClass.class, true));
+        assertEquals("Unsupported top level type java.io.ObjectStreamClass", e.getMessage());
+    }
+
+    @Test
+    void generateCodeForClass_NonSerializable() {
+        class NonSerializableClass {
+        }
+
+        String expectedMessage = "Class " + NonSerializableClass.class.getTypeName() + " does not implement Serializable";
+
+        var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(NonSerializableClass.class, false));
+        assertEquals(expectedMessage, e.getMessage());
+
+        e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCodeForClass(NonSerializableClass.class, true));
+        assertEquals(expectedMessage, e.getMessage());
     }
 }

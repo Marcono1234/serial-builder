@@ -1,0 +1,1 @@
+.enumConstant("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$EnumClass", /* constant name */)

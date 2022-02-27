@@ -1,0 +1,1 @@
+.enumConstant(/* enum class */, /* constant name */)

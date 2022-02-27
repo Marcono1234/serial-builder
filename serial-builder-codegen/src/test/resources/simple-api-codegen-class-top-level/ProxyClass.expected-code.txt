@@ -1,0 +1,5 @@
+byte[] serialData = SimpleSerialBuilder.startProxyObject("java.lang.Runnable", "java.util.concurrent.Callable")
+    /*
+     * ... invocation handler
+     */
+.endProxyObject();

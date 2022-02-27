@@ -1,0 +1,13 @@
+byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+    .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableClassWithWriteObject", 1L)
+        .primitiveIntField("i", /* value */)
+        .beginObjectField("s", "java.lang.String")
+            .string(/* value */)
+        .endField()
+        .writeObjectWith(writer -> {
+            /*
+             * ... object data
+             */
+        })
+    .endClassData()
+.endObject();
