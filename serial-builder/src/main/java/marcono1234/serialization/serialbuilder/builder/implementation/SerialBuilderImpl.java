@@ -797,7 +797,7 @@ public class SerialBuilderImpl implements ObjectStart, ArrayObjectElementsStart,
                 throw new AssertionError("Unprocessed element counts: " + objectArrayElementCounts);
             }
             if (!pendingPostObjectActions.isEmpty()) {
-                throw new AssertionError("Unprocessed post object actions: " + pendingObjectsActions.size());
+                throw new AssertionError("Unprocessed post object actions: " + pendingPostObjectActions.size());
             }
 
             if (isBuildingSingleObject) {
