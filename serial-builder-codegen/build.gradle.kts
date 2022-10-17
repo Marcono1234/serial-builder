@@ -30,7 +30,10 @@ tasks.test {
     useJUnitPlatform()
 
     // Temporary workaround for https://github.com/OpenHFT/Java-Runtime-Compiler/issues/91
-    jvmArgs = listOf("--add-opens", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED")
+    jvmArgs = listOf(
+        "--add-opens", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+        "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+    )
 }
 
 tasks.javadoc {
