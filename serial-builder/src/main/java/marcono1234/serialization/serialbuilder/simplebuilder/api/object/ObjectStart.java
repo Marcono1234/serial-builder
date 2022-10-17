@@ -238,16 +238,6 @@ public interface ObjectStart<C> {
         return beginObjectArray(new Handle(), arrayType);
     }
 
-    private static String getArrayTypeName(Class<?> arrayType) {
-        if (!arrayType.isArray()) {
-            throw new IllegalArgumentException("Not an array type: " + arrayType.getTypeName());
-        }
-        if (arrayType.getComponentType().isPrimitive()) {
-            throw new IllegalArgumentException("Primitive array instead of object array: " + arrayType.getTypeName());
-        }
-        return arrayType.getTypeName();
-    }
-
     /**
      * Begins an array of objects and assigns a handle to it. The next step are the array elements.
      *
@@ -257,8 +247,8 @@ public interface ObjectStart<C> {
      *      type of the array, e.g. {@code String[].class}
      * @return <i>next step</i>
      */
-    default ObjectArrayElements<C> beginObjectArray(Handle unassignedHandle, Class<?> arrayType) {
-        return beginObjectArray(unassignedHandle, getArrayTypeName(arrayType));
+    default ObjectArrayElements<C> beginObjectArray(Handle unassignedHandle, Class<? extends Object[]> arrayType) {
+        return beginObjectArray(unassignedHandle, arrayType.getTypeName());
     }
 
     /**
@@ -268,7 +258,7 @@ public interface ObjectStart<C> {
      *      type of the array, e.g. {@code String[].class}
      * @return <i>next step</i>
      */
-    default ObjectArrayElements<C> beginObjectArray(Class<?> arrayType) {
+    default ObjectArrayElements<C> beginObjectArray(Class<? extends Object[]> arrayType) {
         return beginObjectArray(new Handle(), arrayType);
     }
 
@@ -317,8 +307,8 @@ public interface ObjectStart<C> {
      *      for writing the array elements
      * @return <i>next step</i>
      */
-    default C objectArray(Handle unassignedHandle, Class<?> arrayType, Function<ObjectArrayElements<Enclosing>, Enclosing> writer) {
-        return objectArray(unassignedHandle, getArrayTypeName(arrayType), writer);
+    default C objectArray(Handle unassignedHandle, Class<? extends Object[]> arrayType, Function<ObjectArrayElements<Enclosing>, Enclosing> writer) {
+        return objectArray(unassignedHandle, arrayType.getTypeName(), writer);
     }
 
     /**
@@ -332,7 +322,7 @@ public interface ObjectStart<C> {
      *      for writing the array elements
      * @return <i>next step</i>
      */
-    default C objectArray(Class<?> arrayType, Function<ObjectArrayElements<Enclosing>, Enclosing> writer) {
+    default C objectArray(Class<? extends Object[]> arrayType, Function<ObjectArrayElements<Enclosing>, Enclosing> writer) {
         return objectArray(new Handle(), arrayType, writer);
     }
 
