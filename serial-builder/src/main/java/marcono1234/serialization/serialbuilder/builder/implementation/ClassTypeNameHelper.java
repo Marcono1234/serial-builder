@@ -1,5 +1,8 @@
 package marcono1234.serialization.serialbuilder.builder.implementation;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class ClassTypeNameHelper {
     private ClassTypeNameHelper() {
     }
@@ -19,15 +22,17 @@ public class ClassTypeNameHelper {
     }
 
     public static String[] getInterfaceNames(Class<?>... interfaces) {
-        String[] interfacesNames = new String[interfaces.length];
-        for (int i = 0; i < interfaces.length; i++) {
-            Class<?> interface_ = interfaces[i];
-            if (!interface_.isInterface()) {
-                throw new IllegalArgumentException("Not an interface: " + interface_.getTypeName());
-            }
+        return getInterfaceNames(Arrays.asList(interfaces));
+    }
 
-            interfacesNames[i] = interfaces[i].getTypeName();
-        }
-        return interfacesNames;
+    public static String[] getInterfaceNames(List<Class<?>> interfaces) {
+        return interfaces.stream()
+            .map(c -> {
+                if (!c.isInterface()) {
+                    throw new IllegalArgumentException("Not an interface: " + c.getTypeName());
+                }
+                return c.getTypeName();
+            })
+            .toArray(String[]::new);
     }
 }
