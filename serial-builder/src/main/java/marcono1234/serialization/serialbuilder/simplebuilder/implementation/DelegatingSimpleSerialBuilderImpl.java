@@ -453,7 +453,7 @@ public class DelegatingSimpleSerialBuilderImpl<C> implements ObjectStart, Object
     }
 
     @Override
-    public SerializableObjectDataEnd objectField(String fieldName, String fieldType, Function writer) {
+    public SerializableObjectData objectField(String fieldName, String fieldType, Function writer) {
         @SuppressWarnings("unchecked")
         var returnedBuilder = writer.apply(beginObjectField(fieldName, fieldType));
         if (returnedBuilder != this) {

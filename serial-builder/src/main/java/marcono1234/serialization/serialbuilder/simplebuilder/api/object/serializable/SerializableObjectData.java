@@ -139,7 +139,7 @@ public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> 
      *      for writing the value of the field
      * @return <i>this</i>
      */
-    SerializableObjectDataEnd<C> objectField(String fieldName, String fieldType, Function<ObjectStart<Enclosing>, Enclosing> writer);
+    SerializableObjectData<C> objectField(String fieldName, String fieldType, Function<ObjectStart<Enclosing>, Enclosing> writer);
 
     /**
      * Writes an object field. Allows using a separate method for creating the field value without having to interrupt
@@ -154,7 +154,7 @@ public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> 
      *      for writing the value of the field
      * @return <i>this</i>
      */
-    default SerializableObjectDataEnd<C> objectField(String fieldName, Class<?> fieldType, Function<ObjectStart<Enclosing>, Enclosing> writer) {
+    default SerializableObjectData<C> objectField(String fieldName, Class<?> fieldType, Function<ObjectStart<Enclosing>, Enclosing> writer) {
         return objectField(fieldName, ClassTypeNameHelper.getObjectTypeName(fieldType), writer);
     }
 
@@ -166,5 +166,6 @@ public interface SerializableObjectData<C> extends SerializableObjectDataEnd<C> 
      *
      * @return <i>next step</i>
      */
+    // Has SerializableObjectDataEnd as return type to make sure there is at most one writeObjectWith call
     SerializableObjectDataEnd<C> writeObjectWith(ThrowingConsumer<ObjectBuildingDataOutput> writer);
 }
