@@ -148,7 +148,7 @@ class SimpleSerialBuilderCodeGenTest {
     @ParameterizedTest(name = "[{index}] {0}")
     @SerializationDataSource("/simple-api-codegen")
     // First parameter is used for display purposes
-    void codeGeneration(@SuppressWarnings("unused") String fileName, byte[] serialData, String expectedCode) throws Exception {
+    void generateCode(@SuppressWarnings("unused") String fileName, byte[] serialData, String expectedCode) throws Exception {
         String actualCode = SimpleSerialBuilderCodeGen.generateCode(serialData);
         assertEquals(expectedCode, actualCode);
 
@@ -162,7 +162,7 @@ class SimpleSerialBuilderCodeGenTest {
     @ParameterizedTest(name = "[{index}] {0}")
     @SerializationDataSource("/simple-api-codegen-unsupported-features")
     // First parameter is used for display purposes
-    void codeGeneration_UnsupportedFeatures(@SuppressWarnings("unused") String fileName, byte[] serialData, String expectedCode) throws Exception {
+    void generateCode_UnsupportedFeatures(@SuppressWarnings("unused") String fileName, byte[] serialData, String expectedCode) throws Exception {
         String actualCode = SimpleSerialBuilderCodeGen.generateCode(serialData);
         assertEquals(expectedCode, actualCode);
 
@@ -232,9 +232,44 @@ class SimpleSerialBuilderCodeGenTest {
     @ParameterizedTest(name = "[{index}] {0}")
     @SerializationDataSource(value = "/simple-api-codegen-unsupported-features-failing", type = SerializationDataSource.Type.FAILING)
     // First parameter is used for display purposes
-    void codeGeneration_UnsupportedFeatures_Failing(@SuppressWarnings("unused") String fileName, byte[] serialData, String expectedExceptionMessage) {
+    void generateCode_UnsupportedFeatures_Failing(@SuppressWarnings("unused") String fileName, byte[] serialData, String expectedExceptionMessage) {
         var e = assertThrows(CodeGenException.class, () -> SimpleSerialBuilderCodeGen.generateCode(serialData));
         assertEquals(expectedExceptionMessage, e.getMessage());
+    }
+
+    private record SerializableRecord(int i, String s) implements Serializable { }
+
+    @Test
+    void generateCode_SerializableObject() throws CodeGenException {
+        assertEquals(
+            """
+            byte[] serialData = SimpleSerialBuilder.startSerializableObject()
+                .beginClassData("marcono1234.serialization.serialbuilder.codegen.SimpleSerialBuilderCodeGenTest$SerializableRecord", 0L)
+                    .primitiveIntField("i", 1)
+                    .beginObjectField("s", "java.lang.String")
+                        .string("a")
+                    .endField()
+                .endClassData()
+            .endObject();
+            """,
+            SimpleSerialBuilderCodeGen.generateCode(new SerializableRecord(1, "a"))
+        );
+        assertEquals(
+            """
+            byte[] serialData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+                writer.string("test");
+            });
+            """,
+            SimpleSerialBuilderCodeGen.generateCode("test")
+        );
+        assertEquals(
+            """
+            byte[] serialData = SimpleSerialBuilder.writeSerializationDataWith(writer -> {
+                writer.nullObject();
+            });
+            """,
+            SimpleSerialBuilderCodeGen.generateCode((Serializable) null)
+        );
     }
 
     @Target(ElementType.METHOD)

@@ -4,10 +4,13 @@ import marcono1234.serialization.serialbuilder.codegen.implementation.ClassCodeG
 import marcono1234.serialization.serialbuilder.codegen.implementation.SerialDataCodeGen;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 /**
- * Java code generator which generates for the given serialization data the corresponding {@code marcono1234.serialization.serialbuilder.SimpleSerialBuilder}
+ * Java code generator which generates for given serialization data the corresponding {@code marcono1234.serialization.serialbuilder.SimpleSerialBuilder}
  * calls recreating that serialization data (as close as possible).
  */
 public class SimpleSerialBuilderCodeGen {
@@ -52,6 +55,8 @@ public class SimpleSerialBuilderCodeGen {
      * byte[] existingSerialData = out.toByteArray();
      * String generatedCode = SimpleSerialBuilderCodeGen.generateCode(existingSerialData);
      * }</pre>
+     * (Note: When generating code for an existing {@code Serializable} object the convenience method
+     * {@link #generateCode(Serializable)} can be used.)
      *
      * <p>The generated code would be:
      * <pre>{@code
@@ -71,13 +76,14 @@ public class SimpleSerialBuilderCodeGen {
      * (depending on the JDK version used to create the serialization data, the output might differ)
      *
      * @param serializationData
-     *      The existing serialization data; this is all the data written to the {@code OutputStream} provided to the
-     *      constructor of {@link java.io.ObjectOutputStream}
+     *      The existing serialization data; this is all the data that would have been written to an
+     *      {@code OutputStream} provided to the constructor of {@link java.io.ObjectOutputStream}
      * @return
      *      The generated Java code
      * @throws CodeGenException
      *      If code generation fails; either because the serialization data is malformed, or because it cannot be
      *      recreated using the {@code SimpleSerialBuilder}
+     * @see #generateCode(Serializable)
      */
     public static String generateCode(byte[] serializationData) throws CodeGenException {
         try (SerialDataCodeGen codeGen = new SerialDataCodeGen(new ByteArrayInputStream(serializationData))) {
@@ -85,6 +91,31 @@ public class SimpleSerialBuilderCodeGen {
         } catch (IOException e) {
             throw new CodeGenException("Code generation failed: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * For the given {@link Serializable} object generates the corresponding {@code marcono1234.serialization.serialbuilder.SimpleSerialBuilder}
+     * calls recreating the serialization data of that object (as close as possible).
+     *
+     * <p>This is a convenience method which serializes the object using {@link ObjectOutputStream} and then passes
+     * the serialization data to {@link #generateCode(byte[])}.
+     *
+     * @param object
+     *      The serializable object for which to generate the builder Java code
+     * @return
+     *      The generated Java code
+     * @throws CodeGenException
+     *      If code generation fails; either because serializing the object fails, or because its data cannot be
+     *      recreated using the {@code SimpleSerialBuilder}
+     */
+    public static String generateCode(Serializable object) throws CodeGenException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (ObjectOutputStream objOut = new ObjectOutputStream(out)) {
+            objOut.writeObject(object);
+        } catch (IOException e) {
+            throw new CodeGenException("Serializing object failed", e);
+        }
+        return generateCode(out.toByteArray());
     }
 
     /**
