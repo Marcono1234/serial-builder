@@ -229,6 +229,7 @@ configure them manually.
 
 ## Similar / related projects
 - [NickstaDB's SerializationDumper](https://github.com/NickstaDB/SerializationDumper)
+- [Éamonn McManus' Serialysis](https://github.com/eamonnmcmanus/serialysis)
 - [frohoff's ysoserial](https://github.com/frohoff/ysoserial)
 - [Moritz Bechler's ruby-serialize](https://github.com/mb-syss/ruby-serialize)
 
